@@ -43,7 +43,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
           children: [
             AppBar(
               title: const Text(
-                "My App Bar",
+                "Main Activity window",
                 style: TextStyle(color: Colors.white),
               ),
               backgroundColor: Colors.transparent,
@@ -74,19 +74,40 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                 itemBuilder: (context, index) {
                   return Padding(
                     padding: const EdgeInsets.all(10),
-                    child: Container(
-                      height: 100,
-                      width: 150,
-                      decoration: BoxDecoration(
-                        color: Colors.orangeAccent,
-                        borderRadius: BorderRadius.circular(10),
+                    child: LongPressDraggable<String>(
+                      data: activeActivities[index],
+                      feedback: Container(
+                        height: 100,
+                        width: 150,
+                        decoration: BoxDecoration(
+                          color: Colors.orangeAccent,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Center(
+                          child: Text(
+                            activeActivities[index],
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
                       ),
-                      child: Center(
-                        child: Text(
-                          activeActivities[index],
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
+                      childWhenDragging: Container(),
+                      child: Container(
+                        height: 100,
+                        width: 150,
+                        decoration: BoxDecoration(
+                          color: Colors.orangeAccent,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Center(
+                          child: Text(
+                            activeActivities[index],
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
                           ),
                         ),
                       ),
@@ -137,17 +158,26 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.green
-                              .withOpacity(0.8), // Transparent green color
+                              .withOpacity(0.8), // Transparent blue color
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Center(
-                          child: Text(
-                            "End Activity",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                            ),
-                          ),
+                        child: DragTarget<String>(
+                          builder: (context, candidateData, rejectedData) {
+                            return const Center(
+                              child: Text(
+                                "End Activity",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                ),
+                              ),
+                            );
+                          },
+                          onAccept: (data) {
+                            setState(() {
+                              activeActivities.remove(data);
+                            });
+                          },
                         ),
                       ),
                     ),
