@@ -1,3 +1,4 @@
+import 'package:dailyspace/vis.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -48,9 +49,15 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               ),
               backgroundColor: Colors.transparent,
               elevation: 0,
-              leading: const Icon(
-                Icons.menu,
-                color: Colors.white,
+              leading: Builder(
+                builder: (BuildContext context) {
+                  return IconButton(
+                    icon: const Icon(Icons.menu, color: Colors.white),
+                    onPressed: () {
+                      Scaffold.of(context).openDrawer();
+                    },
+                  );
+                },
               ),
               actions: [
                 IconButton(
@@ -240,6 +247,45 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                 },
               ),
             ),
+          ],
+        ),
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            DrawerHeader(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.lightBlueAccent, Colors.lightGreenAccent],
+                ),
+              ),
+              child: Text(
+                'Menu',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                ),
+              ),
+            ),
+            ListTile(
+              title: Text('Main Menu'),
+              onTap: () {
+                // Add functionality for Option 1
+              },
+            ),
+            ListTile(
+              title: Text('Visualisation'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => OptionTwoPage()),
+                );
+              },
+            ),
+            // Add more ListTile widgets for additional menu options
           ],
         ),
       ),
