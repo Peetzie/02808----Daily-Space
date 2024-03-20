@@ -26,7 +26,7 @@ class ActivityTracker extends StatefulWidget {
 
 class _ActivityTrackerState extends State<ActivityTracker> {
   List<String> availableActivities =
-      List.generate(40, (index) => 'Activity ${index + 1}');
+      List.generate(4000000, (index) => 'Activity ${index + 1}');
   List<String> activeActivities = [];
 
   @override

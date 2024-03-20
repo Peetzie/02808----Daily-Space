@@ -7,24 +7,6 @@ class OptionTwoPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Second Page",
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Builder(
-          builder: (BuildContext context) {
-            return IconButton(
-              icon: const Icon(Icons.menu, color: Colors.white),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            );
-          },
-        ),
-      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -33,11 +15,49 @@ class OptionTwoPage extends StatelessWidget {
             colors: [Colors.lightBlueAccent, Colors.lightGreenAccent],
           ),
         ),
-        child: Center(
-          child: Text(
-            "This is the second page",
-            style: TextStyle(color: Colors.white, fontSize: 24),
-          ),
+        child: Column(
+          children: [
+            AppBar(
+              title: const Text(
+                "Main Activity window",
+                style: TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: Builder(
+                builder: (BuildContext context) {
+                  return IconButton(
+                    icon: const Icon(Icons.menu, color: Colors.white),
+                    onPressed: () {
+                      Scaffold.of(context).openDrawer();
+                    },
+                  );
+                },
+              ),
+              actions: [
+                IconButton(
+                  onPressed: () {},
+                  icon: const Icon(Icons.logout),
+                  color: Colors.white,
+                )
+              ],
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.lightBlueAccent, Colors.lightGreenAccent],
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  "This is the second page",
+                  style: TextStyle(color: Colors.white, fontSize: 24),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
       drawer: Drawer(
