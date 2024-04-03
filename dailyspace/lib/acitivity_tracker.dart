@@ -58,8 +58,9 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               actions: [
                 IconButton(
                     onPressed: () {
-                      TaskService.fetchTasks(account);
+                      TaskService.fetchTasksForList(account);
                     },
+                    tooltip: 'Fetch tasks',
                     icon: const Icon(Icons.add_road),
                     color: Colors.white),
                 IconButton(
@@ -68,7 +69,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                         account); // Call fetchTasks when the button is pressed
                   },
                   icon: const Icon(Icons.download),
-                  tooltip: 'Fetch Tasks',
+                  tooltip: 'Fetch lists',
                   color: Colors.white,
                 ),
                 IconButton(

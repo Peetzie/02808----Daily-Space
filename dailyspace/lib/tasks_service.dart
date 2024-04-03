@@ -20,7 +20,7 @@ class TaskService {
         print(_parseListResponse(data));
         return _parseListResponse(data);
       } else {
-        log('Failed to fetch tasks -- Status code: ${response.statusCode}');
+        log('Failed to fetch task lists -- Status code: ${response.statusCode}');
         return {};
       }
     } else {
@@ -28,22 +28,37 @@ class TaskService {
     }
   }
 
-  static Future<Map<String, Map<String, dynamic>>> fetchTasks(
+  static Future<Map<String, Map<String, dynamic>>> fetchTasksForList(
       GoogleSignInAccount? account) async {
+    final tasks = <String, Map<String, dynamic>>{};
+
+    final lists = await fetchLists(account);
+
+    for (final entry in lists.entries) {
+      final fetchedTasks =
+          await _fetchTasksForList(account, entry.value, entry.key);
+      tasks.addAll(fetchedTasks);
+    }
+
+    return tasks;
+  }
+
+  static Future<Map<String, Map<String, dynamic>>> _fetchTasksForList(
+      GoogleSignInAccount? account, String listId, String listName) async {
     if (account != null) {
       final authHeaders = await account.authHeaders;
       final googleHttpClient = GoogleHttpClient(authHeaders);
       final url = Uri.parse(
-          'https://tasks.googleapis.com/tasks/v1/lists/MDA0NDMxNTc1MjM2MjQwNTA1NzQ6MDow/tasks');
+          'https://tasks.googleapis.com/tasks/v1/lists/$listId/tasks');
 
       final response = await googleHttpClient.get(url);
 
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
-        print(_parseTasksResponse(data));
-        return _parseTasksResponse(data);
+        print(_parseTasksResponse(data, listName, listId));
+        return _parseTasksResponse(data, listName, listId);
       } else {
-        log('Failed to fetch tasks -- Status code: ${response.statusCode}');
+        log('Failed to fetch tasks for list $listName -- Status code: ${response.statusCode}');
         return {};
       }
     } else {
@@ -52,22 +67,25 @@ class TaskService {
   }
 
   static Map<String, Map<String, dynamic>> _parseTasksResponse(
-      dynamic response) {
+      dynamic response, String listName, String listId) {
     List items = response['items'];
     Map<String, Map<String, dynamic>> tasksDictionary = {};
 
     for (var item in items) {
-      String id = item['id'];
+      String taskId = item['id'];
       String title = item['title'];
       String updated = item['updated'];
       String notes = item['notes'] ?? "";
       String due = item['due'] ?? "";
 
-      tasksDictionary[id] = {
+      // Associate task with list name and list ID
+      tasksDictionary[taskId] = {
         'title': title,
         'updated': updated,
         'notes': notes,
-        'due': due
+        'due': due,
+        'listName': listName,
+        'listId': listId,
       };
     }
     return tasksDictionary;
