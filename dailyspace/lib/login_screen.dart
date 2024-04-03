@@ -1,17 +1,10 @@
 import 'dart:developer';
-
 import 'package:auth_buttons/auth_buttons.dart';
+import 'package:dailyspace/acitivity_tracker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
-import 'acitivity_tracker.dart';
-
-// Scopes required by this application
-const List<String> scopes = <String>[
-  'email',
-  'https://www.googleapis.com/auth/contacts.readonly',
-];
+import 'google_sign_in_manager.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -45,42 +38,25 @@ class LoginScreen extends StatelessWidget {
   Future<void> _signInWithGoogle(BuildContext context) async {
     print('Attempting Google Sign-In');
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn(scopes: scopes);
+      // Use the shared instance of GoogleSignIn
+      final GoogleSignIn googleSignIn =
+          GoogleSignInManager.instance.googleSignIn;
       final GoogleSignInAccount? googleSignInAccount =
           await googleSignIn.signIn();
       if (googleSignInAccount != null) {
-        bool isAuthorized = googleSignInAccount != null;
-
-        // Check for web platform and authorization
-        if (kIsWeb) {
-          isAuthorized = await googleSignInAccount.authHeaders != null;
-        }
+        bool isAuthorized =
+            true; // Simplification, as we know the account is not null
 
         // If user is authorized, navigate to activity tracker
-        if (isAuthorized) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const ActivityTracker()),
-          );
-        } else {
-          // Request additional permissions if needed
-          final bool authorizedScopes =
-              await googleSignIn.requestScopes(scopes);
-          if (authorizedScopes) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const ActivityTracker()),
-            );
-          } else {
-            // Handle the scenario where the user didn't grant all required permissions
-            // You can show a dialog or a message here
-            print('User did not grant all required permissions');
-          }
-        }
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ActivityTracker()),
+        );
+      } else {
+        print('User did not grant all required permissions');
       }
     } catch (error) {
       print('Error signing in with Google: $error');
-      // Handle error as needed
     }
   }
 }

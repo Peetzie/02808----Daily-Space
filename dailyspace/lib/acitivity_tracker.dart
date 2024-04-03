@@ -1,6 +1,8 @@
+import 'package:dailyspace/login_screen.dart';
 import 'package:flutter/material.dart';
-
+import 'package:google_sign_in/google_sign_in.dart';
 import 'vis.dart';
+import 'google_sign_in_manager.dart';
 
 class ActivityTracker extends StatefulWidget {
   const ActivityTracker({super.key});
@@ -46,7 +48,12 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               ),
               actions: [
                 IconButton(
-                  onPressed: () {},
+                  onPressed: () async {
+                    await GoogleSignInManager.instance.googleSignIn.signOut();
+                    // Navigate back to login screen
+                    Navigator.of(context).pushReplacement(MaterialPageRoute(
+                        builder: (context) => const LoginScreen()));
+                  },
                   icon: const Icon(Icons.logout),
                   color: Colors.white,
                 )
