@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:developer';
+
+import 'package:dailyspace/google_http_client.dart';
 import 'package:dailyspace/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -47,6 +51,14 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                 },
               ),
               actions: [
+                IconButton(
+                  onPressed: () {
+                    fetchTasks(); // Call fetchTasks when the button is pressed
+                  },
+                  icon: const Icon(Icons.download),
+                  tooltip: 'Fetch Tasks',
+                  color: Colors.white,
+                ),
                 IconButton(
                   onPressed: () async {
                     await GoogleSignInManager.instance.googleSignIn.signOut();
@@ -283,5 +295,26 @@ class _ActivityTrackerState extends State<ActivityTracker> {
         ),
       ),
     );
+  }
+
+  void fetchTasks() async {
+    final GoogleSignInAccount? account =
+        GoogleSignInManager.instance.googleSignIn.currentUser;
+
+    if (account != null) {
+      final authHeaders = await account.authHeaders;
+      final googleHttpClient = GoogleHttpClient(authHeaders);
+      final url =
+          Uri.parse('https://www.googleapis.com/tasks/v1/users/@me/lists');
+
+      final response = await googleHttpClient.get(url);
+
+      if (response.statusCode == 200) {
+        var data = jsonDecode(response.body);
+        print(data);
+      } else {
+        print('Failed to fetch tasks -- Status code: ${response.statusCode}');
+      }
+    }
   }
 }
