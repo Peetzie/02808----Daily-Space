@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import 'package:dailyspace/google_http_client.dart';
 import 'package:dailyspace/login_screen.dart';
+import 'package:dailyspace/tasks_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/src/response.dart';
@@ -20,6 +21,9 @@ class _ActivityTrackerState extends State<ActivityTracker> {
   List<String> availableActivities =
       List.generate(4000000, (index) => 'Activity ${index + 1}');
   List<String> activeActivities = [];
+
+  final GoogleSignInAccount? account =
+      GoogleSignInManager.instance.googleSignIn.currentUser;
 
   @override
   Widget build(BuildContext context) {
@@ -54,13 +58,14 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               actions: [
                 IconButton(
                     onPressed: () {
-                      fetchTasks();
+                      TaskService.fetchTasks(account);
                     },
                     icon: const Icon(Icons.add_road),
                     color: Colors.white),
                 IconButton(
                   onPressed: () {
-                    fetchLists(); // Call fetchTasks when the button is pressed
+                    TaskService.fetchLists(
+                        account); // Call fetchTasks when the button is pressed
                   },
                   icon: const Icon(Icons.download),
                   tooltip: 'Fetch Tasks',
@@ -302,80 +307,5 @@ class _ActivityTrackerState extends State<ActivityTracker> {
         ),
       ),
     );
-  }
-
-  void fetchTasks() async {
-    final GoogleSignInAccount? account =
-        GoogleSignInManager.instance.googleSignIn.currentUser;
-    if (account != null) {
-      final authHeaders = await account.authHeaders;
-      final googleHttpClient = GoogleHttpClient(authHeaders);
-      final url = Uri.parse(
-          'https://tasks.googleapis.com/tasks/v1/lists/MDA0NDMxNTc1MjM2MjQwNTA1NzQ6MDow/tasks');
-
-      final response = await googleHttpClient.get(url);
-
-      if (response.statusCode == 200) {
-        var data = jsonDecode(response.body);
-        print(parseTasksResponse(data));
-      } else {
-        log("Failed to fetch tasks -- Status code: ${response.statusCode}");
-      }
-    }
-  }
-
-  void fetchLists() async {
-    final GoogleSignInAccount? account =
-        GoogleSignInManager.instance.googleSignIn.currentUser;
-
-    if (account != null) {
-      final authHeaders = await account.authHeaders;
-      final googleHttpClient = GoogleHttpClient(authHeaders);
-      final url =
-          Uri.parse('https://tasks.googleapis.com/tasks/v1/users/@me/lists');
-
-      final response = await googleHttpClient.get(url);
-
-      if (response.statusCode == 200) {
-        var data = jsonDecode(response.body);
-        print(parseListResponse(data));
-      } else {
-        log('Failed to fetch tasks -- Status code: ${response.statusCode}');
-      }
-    }
-  }
-
-  Map<String, Map<String, dynamic>> parseTasksResponse(dynamic repsponse) {
-    List items = repsponse['items'];
-    Map<String, Map<String, dynamic>> tasksDictionary = {};
-
-    for (var item in items) {
-      String id = item['id'];
-      String title = item['title'];
-      String updated = item['updated'];
-      String notes = item['notes'] ?? "";
-      String due = item['due'] ?? "";
-
-      tasksDictionary[id] = {
-        'title': title,
-        'updated': updated,
-        'notes': notes,
-        'due': due
-      };
-    }
-    return tasksDictionary;
-  }
-
-  Map<String, String> parseListResponse(dynamic response) {
-    List items = response['items'];
-    Map<String, String> titlesWithIDs = {};
-
-    for (var item in items) {
-      String title = item['title'];
-      String id = item['id'];
-      titlesWithIDs[title] = id;
-    }
-
-    return titlesWithIDs;
   }
 }
