@@ -1,14 +1,14 @@
-import 'package:dailyspace/main.dart';
+import 'package:dailyspace/acitivity_tracker.dart';
 import 'package:flutter/material.dart';
 
 class OptionTwoPage extends StatelessWidget {
-  const OptionTwoPage({Key? key}) : super(key: key);
+  const OptionTwoPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -43,14 +43,14 @@ class OptionTwoPage extends StatelessWidget {
               ],
             ),
             Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [Colors.lightBlueAccent, Colors.lightGreenAccent],
                 ),
               ),
-              child: Center(
+              child: const Center(
                 child: Text(
                   "This is the second page",
                   style: TextStyle(color: Colors.white, fontSize: 24),
@@ -64,7 +64,7 @@ class OptionTwoPage extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
-            DrawerHeader(
+            const DrawerHeader(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
@@ -81,20 +81,20 @@ class OptionTwoPage extends StatelessWidget {
               ),
             ),
             ListTile(
-              title: Text('Main Menu'),
+              title: const Text('Main Menu'),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => MyApp()),
+                  MaterialPageRoute(builder: (context) => const ActivityTracker()),
                 );
               },
             ),
             ListTile(
-              title: Text('Visualisation'),
+              title: const Text('Visualisation'),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => OptionTwoPage()),
+                  MaterialPageRoute(builder: (context) => const OptionTwoPage()),
                 );
               },
             ),
