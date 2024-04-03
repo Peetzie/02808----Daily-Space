@@ -18,9 +18,28 @@ class ActivityTracker extends StatefulWidget {
 }
 
 class _ActivityTrackerState extends State<ActivityTracker> {
-  List<String> availableActivities =
-      List.generate(4000000, (index) => 'Activity ${index + 1}');
+  List<Map<String, dynamic>> availableActivities = [];
   List<String> activeActivities = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchActivities();
+  }
+
+  Future<void> _fetchActivities() async {
+    final tasks = await TaskService.fetchTasksForList(account);
+    tasks.values.forEach((task) {
+      setState(() {
+        availableActivities.add({
+          'id': task['id'],
+          'title': task['title'],
+          'due': task['due'],
+        });
+      });
+    });
+    print(availableActivities);
+  }
 
   final GoogleSignInAccount? account =
       GoogleSignInManager.instance.googleSignIn.currentUser;
@@ -57,19 +76,9 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               ),
               actions: [
                 IconButton(
-                    onPressed: () {
-                      TaskService.fetchTasksForList(account);
-                    },
-                    tooltip: 'Fetch tasks',
-                    icon: const Icon(Icons.add_road),
-                    color: Colors.white),
-                IconButton(
-                  onPressed: () {
-                    TaskService.fetchLists(
-                        account); // Call fetchTasks when the button is pressed
-                  },
-                  icon: const Icon(Icons.download),
-                  tooltip: 'Fetch lists',
+                  onPressed: () {},
+                  tooltip: "Sync with Google",
+                  icon: const Icon(Icons.sync),
                   color: Colors.white,
                 ),
                 IconButton(
@@ -222,7 +231,8 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                 itemCount: availableActivities.length,
                 itemBuilder: (context, index) {
                   return LongPressDraggable<String>(
-                    data: availableActivities[index],
+                    data: availableActivities[index]
+                        ['title'], // Update this line
                     feedback: Container(
                       height: 100,
                       width: 150,
@@ -233,7 +243,8 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                       ),
                       child: Center(
                         child: Text(
-                          availableActivities[index],
+                          availableActivities[index]
+                              ['title'], // Update this line
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -252,7 +263,8 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                       ),
                       child: Center(
                         child: Text(
-                          availableActivities[index],
+                          availableActivities[index]
+                              ['title'], // Update this line
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
