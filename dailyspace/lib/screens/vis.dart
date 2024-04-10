@@ -1,4 +1,4 @@
-import 'package:dailyspace/acitivity_tracker.dart';
+import 'package:dailyspace/screens/acitivity_tracker.dart';
 import 'package:flutter/material.dart';
 
 class OptionTwoPage extends StatelessWidget {
@@ -85,7 +85,8 @@ class OptionTwoPage extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const ActivityTracker()),
+                  MaterialPageRoute(
+                      builder: (context) => const ActivityTracker()),
                 );
               },
             ),
@@ -94,7 +95,8 @@ class OptionTwoPage extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const OptionTwoPage()),
+                  MaterialPageRoute(
+                      builder: (context) => const OptionTwoPage()),
                 );
               },
             ),

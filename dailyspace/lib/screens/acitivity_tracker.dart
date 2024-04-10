@@ -1,21 +1,12 @@
-import 'dart:convert';
 import 'dart:developer';
 
-import 'package:dailyspace/google_http_client.dart';
-import 'package:dailyspace/login_screen.dart';
-import 'package:dailyspace/tasks_service.dart';
+import 'package:dailyspace/screens/login_screen.dart';
+import 'package:dailyspace/google/tasks_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:http/src/response.dart';
 import 'vis.dart';
-import 'google_sign_in_manager.dart';
-
-class TaskInfo {
-  final String taskId;
-  final String title;
-
-  TaskInfo(this.taskId, this.title);
-}
+import '../google/google_sign_in_manager.dart';
+import '../custom_classes/taskinfo.dart';
 
 class ActivityTracker extends StatefulWidget {
   const ActivityTracker({Key? key}) : super(key: key);
@@ -54,13 +45,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.lightBlueAccent, Colors.lightGreenAccent],
-          ),
-        ),
+        decoration: const BoxDecoration(color: Color(0xFFFFFFFF)),
         child: Column(
           children: [
             AppBar(

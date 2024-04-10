@@ -1,10 +1,10 @@
 import 'dart:developer';
 import 'package:auth_buttons/auth_buttons.dart';
-import 'package:dailyspace/acitivity_tracker.dart';
+import 'package:dailyspace/screens/acitivity_tracker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'google_sign_in_manager.dart';
+import '../google/google_sign_in_manager.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
