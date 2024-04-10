@@ -10,16 +10,23 @@ import 'package:http/src/response.dart';
 import 'vis.dart';
 import 'google_sign_in_manager.dart';
 
+class TaskInfo {
+  final String taskId;
+  final String title;
+
+  TaskInfo(this.taskId, this.title);
+}
+
 class ActivityTracker extends StatefulWidget {
-  const ActivityTracker({super.key});
+  const ActivityTracker({Key? key}) : super(key: key);
 
   @override
   _ActivityTrackerState createState() => _ActivityTrackerState();
 }
 
 class _ActivityTrackerState extends State<ActivityTracker> {
-  List<Map<String, dynamic>> availableActivities = [];
-  List<String> activeActivities = [];
+  Map<String, Map<String, dynamic>> availableActivities = {};
+  Set<TaskInfo> activeActivities = {};
 
   @override
   void initState() {
@@ -31,14 +38,13 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     final tasks = await TaskService.fetchTasksForList(account);
     tasks.values.forEach((task) {
       setState(() {
-        availableActivities.add({
-          'id': task['id'],
+        availableActivities[task['taskId']] = {
           'title': task['title'],
           'due': task['due'],
-        });
+        };
       });
     });
-    print(availableActivities);
+    log(" List of available activities fetched on reload: $availableActivities");
   }
 
   final GoogleSignInAccount? account =
@@ -76,7 +82,10 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               ),
               actions: [
                 IconButton(
-                  onPressed: () {},
+                  onPressed: () async {
+                    log("Resyncing");
+                    await _fetchActivities();
+                  },
                   tooltip: "Sync with Google",
                   icon: const Icon(Icons.sync),
                   color: Colors.white,
@@ -108,7 +117,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                   return Padding(
                     padding: const EdgeInsets.all(10),
                     child: LongPressDraggable<String>(
-                      data: activeActivities[index],
+                      data: activeActivities.elementAt(index).taskId,
                       feedback: Container(
                         height: 100,
                         width: 150,
@@ -118,7 +127,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                         ),
                         child: Center(
                           child: Text(
-                            activeActivities[index],
+                            activeActivities.elementAt(index).title,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
@@ -136,7 +145,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                         ),
                         child: Center(
                           child: Text(
-                            activeActivities[index],
+                            activeActivities.elementAt(index).title,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
@@ -176,9 +185,12 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                           },
                           onAcceptWithDetails: (data) {
                             setState(() {
-                              log(data.data);
-                              activeActivities.add(data.data);
-                              availableActivities.remove(data.data);
+                              String taskId = data.data;
+                              log(taskId);
+                              activeActivities.add(TaskInfo(taskId,
+                                  availableActivities[taskId]?['title'] ?? ''));
+                              availableActivities.remove(
+                                  taskId); // Remove the taskId from availableActivities
                             });
                           },
                         ),
@@ -209,7 +221,8 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                           },
                           onAcceptWithDetails: (data) {
                             setState(() {
-                              activeActivities.remove(data);
+                              log(data.data);
+                              // activeActivities.remove(data);
                             });
                           },
                         ),
@@ -231,9 +244,10 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                 scrollDirection: Axis.horizontal,
                 itemCount: availableActivities.length,
                 itemBuilder: (context, index) {
+                  final taskId = availableActivities.keys.elementAt(index);
+                  final taskInfo = availableActivities[taskId];
                   return LongPressDraggable<String>(
-                    data: availableActivities[index]
-                        ['title'], // Update this line
+                    data: taskId,
                     feedback: Container(
                       height: 100,
                       width: 150,
@@ -244,8 +258,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                       ),
                       child: Center(
                         child: Text(
-                          availableActivities[index]
-                              ['title'], // Update this line
+                          taskInfo?['title'] ?? '',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -264,8 +277,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                       ),
                       child: Center(
                         child: Text(
-                          availableActivities[index]
-                              ['title'], // Update this line
+                          taskInfo?['title'] ?? '',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -307,7 +319,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               },
             ),
             ListTile(
-              title: const Text('Visualisation'),
+              title: const Text('Visualization'),
               onTap: () {
                 Navigator.push(
                   context,

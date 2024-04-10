@@ -17,7 +17,6 @@ class TaskService {
 
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
-        print(_parseListResponse(data));
         return _parseListResponse(data);
       } else {
         log('Failed to fetch task lists -- Status code: ${response.statusCode}');
@@ -55,7 +54,6 @@ class TaskService {
 
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
-        print(_parseTasksResponse(data, listName, listId));
         return _parseTasksResponse(data, listName, listId);
       } else {
         log('Failed to fetch tasks for list $listName -- Status code: ${response.statusCode}');
@@ -80,6 +78,7 @@ class TaskService {
 
       // Associate task with list name and list ID
       tasksDictionary[taskId] = {
+        'taskId': taskId,
         'title': title,
         'updated': updated,
         'notes': notes,
