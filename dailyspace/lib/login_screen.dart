@@ -21,7 +21,6 @@ class LoginScreen extends StatelessWidget {
           children: [
             GoogleAuthButton(
               onPressed: () {
-                _testCase(context);
                 _signInWithGoogle(context);
               },
             ),
@@ -36,7 +35,7 @@ class LoginScreen extends StatelessWidget {
   }
 
   Future<void> _signInWithGoogle(BuildContext context) async {
-    print('Attempting Google Sign-In');
+    log('Attempting Google Sign-In');
     try {
       // Use the shared instance of GoogleSignIn
       final GoogleSignIn googleSignIn =
@@ -53,10 +52,10 @@ class LoginScreen extends StatelessWidget {
           MaterialPageRoute(builder: (context) => const ActivityTracker()),
         );
       } else {
-        print('User did not grant all required permissions');
+        log('User did not grant all required permissions');
       }
     } catch (error) {
-      print('Error signing in with Google: $error');
+      log('Error signing in with Google: $error');
     }
   }
 }

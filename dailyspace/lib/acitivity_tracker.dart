@@ -176,8 +176,9 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                           },
                           onAcceptWithDetails: (data) {
                             setState(() {
-                              activeActivities.add(data as String);
-                              availableActivities.remove(data);
+                              log(data.data);
+                              activeActivities.add(data.data);
+                              availableActivities.remove(data.data);
                             });
                           },
                         ),
