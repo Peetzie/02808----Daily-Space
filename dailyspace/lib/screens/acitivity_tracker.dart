@@ -58,8 +58,8 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     log(tasks.toString());
     setState(() {
       tasks.values.forEach((task) {
-        availableActivities[task['taskId']] =
-            TaskInfo(task['taskId'], task['title'], task['due']);
+        availableActivities[task['taskId']] = TaskInfo(
+            task['taskId'], task['title'], task['due'], task['colorId']);
       });
       log("List of available activities fetched on reload: $availableActivities");
     });
@@ -192,20 +192,21 @@ class _ActivityTrackerState extends State<ActivityTracker> {
           itemCount: availableActivities.length,
           itemBuilder: (context, index) {
             final task = availableActivities.values.elementAt(index);
-            return _buildTaskContainer(task.title, task.due);
+            log(task.toString());
+            return _buildTaskContainer(task.title, task.due, task.colorId);
           },
         ),
       ),
     );
   }
 
-  Widget _buildTaskContainer(String title, String? due) {
+  Widget _buildTaskContainer(String title, String? due, String colorId) {
     return Container(
       height: 10,
       width: 100,
       margin: const EdgeInsets.symmetric(horizontal: 3),
       decoration: BoxDecoration(
-        color: Colors.orangeAccent,
+        color: getColorFromId(colorId),
         shape: BoxShape.circle,
       ),
       child: Center(
