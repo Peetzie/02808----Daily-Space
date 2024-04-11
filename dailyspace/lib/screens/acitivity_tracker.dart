@@ -203,6 +203,14 @@ class _ActivityTrackerState extends State<ActivityTracker> {
       actions: [
         IconButton(
           onPressed: () async {
+            await GoogleServices.createCalendars(account);
+          },
+          icon: const Icon(Icons.add),
+          color: Colors.black,
+          tooltip: "Create default calendar sortings",
+        ),
+        IconButton(
+          onPressed: () async {
             _openCalendarOverlay();
           },
           icon: const Icon(Icons.calendar_month),

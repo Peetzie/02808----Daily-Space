@@ -27,6 +27,32 @@ class GoogleServices {
     }
   }
 
+  static Future<void> createCalendars(GoogleSignInAccount? account) async {
+    if (account != null) {
+      final authHeaders = await account.authHeaders;
+      final googleHttpClient = GoogleHttpClient(authHeaders);
+      final url = Uri.parse('https://www.googleapis.com/calendar/v3/calendars');
+
+      // JSON object for the request body
+      final Map<String, dynamic> requestBody = {'summary': 'TestCalendar33333'};
+
+      final response = await googleHttpClient.post(
+        url,
+        body: json.encode(requestBody), // Encode the request body as JSON
+        headers: {
+          'Content-Type': 'application/json'
+        }, // Specify content type as application/json
+      );
+
+      // Handle the response
+      if (response.statusCode == 200) {
+        print("Calendar 'TestCalendar' created successfully.");
+      } else {
+        print("Failed to create calendar. Status code: ${response.statusCode}");
+      }
+    }
+  }
+
   static Future<Map<String, Map<String, dynamic>>> fetchTasksFromCalendar(
       GoogleSignInAccount? account, Set<String> selectedCalendars) async {
     final tasks = <String, Map<String, dynamic>>{};
