@@ -1,15 +1,21 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class TimeFormatter {
   static String formatTime(String? datetimeStr) {
     if (datetimeStr != null && datetimeStr.isNotEmpty) {
-      DateTime dateTime = DateTime.parse(datetimeStr);
-      // Use DateFormat from the intl package to format the time part in 24-hour format
-      String formattedTime = DateFormat('HH:mm').format(dateTime);
-      return formattedTime;
-    }
-    return "";
+      if (datetimeStr == "full_day") {
+        return "";
+      } else {
+        DateTime dateTime = DateTime.parse(datetimeStr).toLocal();
+        // Use DateFormat from the intl package to format the time part in 24-hour format
+        String formattedTime = DateFormat('HH:mm').format(dateTime);
+        return formattedTime;
+      }
+    } else
+      return "";
   }
 }
 // Dart Color Definitions for Flutter

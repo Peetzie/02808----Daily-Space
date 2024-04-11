@@ -22,7 +22,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
   late Map<String, TaskInfo> availableActivities;
   late Set<TaskInfo> activeActivities;
   Timer? _timer;
-
+  late List<TaskInfo> earlyStartActivities;
   final GoogleSignInAccount? account =
       GoogleSignInManager.instance.googleSignIn.currentUser;
 
@@ -35,6 +35,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     availableActivities = {};
     activeActivities = {};
     availableCalendars = [];
+    earlyStartActivities = [];
     _fetchCalendars();
     _fetchActivities();
 
@@ -62,17 +63,43 @@ class _ActivityTrackerState extends State<ActivityTracker> {
   }
 
   Future<void> _fetchActivities() async {
-    availableActivities.clear();
-    final tasks =
-        await TaskService.fetchTasksFromCalendar(account, selectedCalendars);
-    log(tasks.toString());
-    setState(() {
-      tasks.values.forEach((task) {
-        availableActivities[task['taskId']] = TaskInfo(
-            task['taskId'], task['title'], task['due'], task['colorId']);
+    try {
+      availableActivities.clear();
+      earlyStartActivities.clear(); // Clear the earlyStartActivities list
+
+      final tasks =
+          await TaskService.fetchTasksFromCalendar(account, selectedCalendars);
+      final now = DateTime.now();
+
+      setState(() {
+        tasks.values.forEach((task) {
+          if (task['due'] == 'full_day') {
+            earlyStartActivities.add(
+                TaskInfo(task['taskId'], task['title'], '', task['colorId']));
+          } else {
+            try {
+              final taskDue = DateTime.parse(task['due']);
+              if (taskDue.isAfter(now) &&
+                  taskDue.difference(now).inMinutes <= 30) {
+                earlyStartActivities.add(TaskInfo(task['taskId'], task['title'],
+                    task['due'], task['colorId']));
+              } else {
+                availableActivities[task['taskId']] = TaskInfo(task['taskId'],
+                    task['title'], task['due'], task['colorId']);
+              }
+            } catch (e) {
+              // Handle the error if the task['due'] is not in a valid DateTime format
+              log("Error parsing date: ${e.toString()}");
+            }
+          }
+        });
       });
+
       log("List of available activities fetched on reload: $availableActivities");
-    });
+    } catch (e) {
+      // Handle potential errors from the fetch call
+      log("Error fetching tasks: ${e.toString()}");
+    }
   }
 
   @override
@@ -83,7 +110,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
   }
 
   Widget _buildBody() {
-    double spaceBetween = MediaQuery.of(context).size.height * 0.13;
+    double spaceBetween = MediaQuery.of(context).size.height * 0.02;
     return Container(
       decoration: const BoxDecoration(color: Color(0xFFFFFFFF)),
       child: Column(
@@ -95,7 +122,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
           ),
           _buildStartTask(),
           SizedBox(
-            height: spaceBetween,
+            height: spaceBetween * 4,
           ),
           _buildWaitingToFinish()
         ],
@@ -146,22 +173,6 @@ class _ActivityTrackerState extends State<ActivityTracker> {
         },
       ),
       actions: [
-        StreamBuilder<DateTime>(
-          stream: currentTimeStream(),
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              return Text(
-                DateFormat('EEEE, dd/MM HH:mm:ss').format(snapshot.data!),
-                style: TextStyle(
-                  fontSize: 17.0,
-                  fontWeight: FontWeight.normal,
-                ),
-              );
-            } else {
-              return SizedBox(); // Return an empty widget if data is not available yet
-            }
-          },
-        ),
         IconButton(
           onPressed: () async {
             _openCalendarOverlay();
@@ -239,7 +250,6 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               itemCount: availableActivities.length,
               itemBuilder: (context, index) {
                 final task = availableActivities.values.elementAt(index);
-                log(task.toString());
                 return _buildTaskContainer(task.title, task.due, task.colorId);
               },
             ),
@@ -290,40 +300,73 @@ class _ActivityTrackerState extends State<ActivityTracker> {
   }
 
   Widget _buildStartTask() {
-    double width = MediaQuery.of(context).size.width * 0.9;
+    double containerHeight =
+        MediaQuery.of(context).size.height * 0.2; // 25% of screen height
+
     return Container(
-      width: width,
+      height: containerHeight,
+      width: MediaQuery.of(context).size.width * 0.9,
       decoration: BoxDecoration(
-          border: Border.all(color: Colors.black, width: 1.0),
-          borderRadius: BorderRadius.circular(10.0)),
+        border: Border.all(color: Colors.black, width: 1.0),
+        borderRadius: BorderRadius.circular(10.0),
+      ),
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: <Widget>[
           Container(
             alignment: Alignment.topLeft,
-            child: const Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Text('Start Task',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    )),
+                Text(
+                  'Start Task',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 SizedBox(
                   height: 4,
                 ),
-                Text('It is time to start this task',
-                    style: TextStyle(fontSize: 16)),
+                Text(
+                  'It is time to start this task',
+                  style: TextStyle(fontSize: 16),
+                ),
               ],
             ),
           ),
-          const SizedBox(height: 8.0),
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            color: Colors.white,
-            child: Row(),
+          SizedBox(height: 16.0),
+          Expanded(
+            child: ListView.builder(
+              itemCount: earlyStartActivities.length,
+              itemBuilder: (context, index) {
+                final task = earlyStartActivities[index];
+                String? dueTime = task.due;
+                String colorId = task.colorId;
+                return Container(
+                  margin: EdgeInsets.symmetric(vertical: 4.0),
+                  decoration: BoxDecoration(
+                      color: getColorFromId(colorId),
+                      borderRadius: BorderRadius.circular(10.0),
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            spreadRadius: 0,
+                            blurRadius: 10,
+                            offset: Offset(0, 2))
+                      ]),
+                  child: ListTile(
+                    title: Text(
+                      task.title,
+                      style:
+                          TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: dueTime != null ? Text(dueTime) : null,
+                  ),
+                );
+              },
+            ),
           ),
           SizedBox(height: 16.0),
           Row(
@@ -350,8 +393,10 @@ class _ActivityTrackerState extends State<ActivityTracker> {
 
   Widget _buildWaitingToFinish() {
     double width = MediaQuery.of(context).size.width * 0.9;
+    double containerHeight = MediaQuery.of(context).size.height * 0.2;
     return Container(
       width: width,
+      height: containerHeight,
       decoration: BoxDecoration(
         border: Border.all(color: Colors.black, width: 1.0),
         borderRadius: BorderRadius.circular(10.0),
