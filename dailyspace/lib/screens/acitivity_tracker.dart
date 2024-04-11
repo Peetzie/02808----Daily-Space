@@ -138,21 +138,24 @@ class _ActivityTrackerState extends State<ActivityTracker> {
   }
 
   Widget _buildBody() {
-    double spaceBetween = MediaQuery.of(context).size.height * 0.02;
     return Container(
       decoration: const BoxDecoration(color: Color(0xFFFFFFFF)),
       child: Column(
         children: [
           _buildAppBar(),
-          _buildAvailableActivities(),
-          SizedBox(
-            height: spaceBetween,
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildAvailableActivities(),
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                  _buildStartTask(),
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.08),
+                  _buildWaitingToFinish(),
+                ],
+              ),
+            ),
           ),
-          _buildStartTask(),
-          SizedBox(
-            height: spaceBetween * 4,
-          ),
-          _buildWaitingToFinish()
         ],
       ),
     );
@@ -184,10 +187,6 @@ class _ActivityTrackerState extends State<ActivityTracker> {
 
   Widget _buildAppBar() {
     return AppBar(
-      title: const Text(
-        "Main Activity window",
-        style: TextStyle(color: Colors.black),
-      ),
       backgroundColor: Colors.transparent,
       elevation: 0,
       leading: Builder(
@@ -254,7 +253,10 @@ class _ActivityTrackerState extends State<ActivityTracker> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 8.0),
+          padding: EdgeInsets.symmetric(
+            horizontal: MediaQuery.of(context).size.width * 0.08,
+            vertical: MediaQuery.of(context).size.width * 0.04,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -263,15 +265,15 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               Text(
                 'Available Activities',
                 style: TextStyle(
-                  fontSize: 20.0,
+                  fontSize: MediaQuery.of(context).size.width * 0.04,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(width: 20),
+              SizedBox(width: MediaQuery.of(context).size.width * 0.03),
               Text(
                 _getFormattedDate(),
                 style: TextStyle(
-                  fontSize: 17.0,
+                  fontSize: MediaQuery.of(context).size.width * 0.018,
                   fontWeight: FontWeight.normal,
                 ),
               ),
@@ -305,9 +307,11 @@ class _ActivityTrackerState extends State<ActivityTracker> {
 
   Widget _buildTaskContainer(String title, String? start, String colorId) {
     return Container(
-      height: 10,
-      width: 100,
-      margin: const EdgeInsets.symmetric(horizontal: 3),
+      height: MediaQuery.of(context).size.width * 0.15,
+      width: MediaQuery.of(context).size.width * 0.15,
+      margin: EdgeInsets.symmetric(
+        horizontal: MediaQuery.of(context).size.width * 0.02,
+      ),
       decoration: BoxDecoration(
         color: getColorFromId(colorId),
         shape: BoxShape.circle,
@@ -318,17 +322,17 @@ class _ActivityTrackerState extends State<ActivityTracker> {
           children: [
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.black,
-                fontSize: 16,
+                fontSize: MediaQuery.of(context).size.width * 0.03,
               ),
             ),
             if (start != "") // Check if start date is not empty
               Text(
                 TimeFormatter.formatTime(start),
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.black,
-                  fontSize: 14,
+                  fontSize: MediaQuery.of(context).size.width * 0.02,
                 ),
               ),
           ],
@@ -338,17 +342,17 @@ class _ActivityTrackerState extends State<ActivityTracker> {
   }
 
   Widget _buildStartTask() {
-    double containerHeight =
-        MediaQuery.of(context).size.height * 0.2; // 25% of screen height
+    double height = MediaQuery.of(context).size.height * 0.25;
+    double width = MediaQuery.of(context).size.width * 0.9;
 
     return Container(
-      height: containerHeight,
-      width: MediaQuery.of(context).size.width * 0.9,
+      height: height,
+      width: width,
       decoration: BoxDecoration(
         border: Border.all(color: Colors.black, width: 1.0),
         borderRadius: BorderRadius.circular(10.0),
       ),
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.all(width * 0.05),
       child: Column(
         children: <Widget>[
           Container(
@@ -360,22 +364,22 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                 Text(
                   'Start Task',
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: height * 0.08,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 SizedBox(
-                  height: 4,
+                  height: MediaQuery.of(context).size.width * 0.005,
                 ),
                 Text(
                   'It is time to start this task',
-                  style: TextStyle(fontSize: 16),
+                  style: TextStyle(fontSize: height * 0.04),
                 ),
               ],
             ),
           ),
-          SizedBox(height: 16.0),
-          Expanded(
+          SizedBox(height: height * 0.02),
+          Flexible(
             child: ListView.builder(
               itemCount: earlyStartActivities.length,
               itemBuilder: (context, index) {
@@ -383,30 +387,35 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                 String? startTime = task.start;
                 String colorId = task.colorId;
                 return Container(
-                  margin: EdgeInsets.symmetric(vertical: 4.0),
+                  margin: EdgeInsets.symmetric(
+                    vertical: height * 0.01,
+                  ),
                   decoration: BoxDecoration(
                       color: getColorFromId(colorId),
-                      borderRadius: BorderRadius.circular(10.0),
+                      borderRadius: BorderRadius.circular(
+                        width * 0.01,
+                      ),
                       boxShadow: [
                         BoxShadow(
                             color: Colors.black.withOpacity(0.1),
                             spreadRadius: 0,
-                            blurRadius: 10,
+                            blurRadius: width * 0.02,
                             offset: Offset(0, 2))
                       ]),
                   child: ListTile(
                     title: Text(
                       task.title,
-                      style:
-                          TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: height * 0.06,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    subtitle: startTime != null ? Text(startTime) : null,
                   ),
                 );
               },
             ),
           ),
-          SizedBox(height: 16.0),
+          SizedBox(height: height * 0.02),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
@@ -430,147 +439,42 @@ class _ActivityTrackerState extends State<ActivityTracker> {
   }
 
   Widget _buildWaitingToFinish() {
-    double width = MediaQuery.of(context).size.width * 0.9;
-    double containerHeight = MediaQuery.of(context).size.height * 0.2;
+    double containerHeight = MediaQuery.of(context).size.height * 0.25;
+    double containerWidth = MediaQuery.of(context).size.width * 0.9;
+
     return Container(
-      width: width,
+      width: containerWidth,
       height: containerHeight,
       decoration: BoxDecoration(
         border: Border.all(color: Colors.black, width: 1.0),
         borderRadius: BorderRadius.circular(10.0),
       ),
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.all(
+        containerWidth * 0.05,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
             'Waiting to finish',
             style: TextStyle(
-              fontSize: 24,
+              fontSize: containerHeight * 0.08,
               fontWeight: FontWeight.bold,
             ),
           ),
           // Only display this task if activeActivities is empty
           if (activeActivities.isEmpty) ...[
-            SizedBox(height: 16), // Spacing between title and conditional text
+            SizedBox(height: containerWidth * 0.05),
             Container(
               alignment: Alignment.center,
               child: Text(
                 "Not yet, keep it up",
-                style: TextStyle(fontSize: 17),
+                style: TextStyle(
+                  fontSize: containerHeight * 0.04,
+                ),
               ),
             ),
           ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildButtonContainer(IconData icon, String label) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.transparent, // Transparent blue color
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.black, width: 2.0),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: Colors.black,
-            size: 40,
-          ),
-          const SizedBox(height: 10),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 20,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActiveActivities() {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 0),
-        decoration: const BoxDecoration(
-          border: Border(
-            top: BorderSide(color: Colors.black, width: 1.0),
-          ),
-        ),
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          itemCount: activeActivities.length,
-          itemBuilder: (context, index) {
-            final task = activeActivities.elementAt(index);
-            return Padding(
-              padding: const EdgeInsets.all(10),
-              child: Container(
-                height: 100,
-                width: 150,
-                decoration: BoxDecoration(
-                  color: Colors.orangeAccent,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Center(
-                  child: Text(
-                    task.title,
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawer() {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: <Widget>[
-          const DrawerHeader(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.lightBlueAccent, Colors.lightGreenAccent],
-              ),
-            ),
-            child: Text(
-              'Menu',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 24,
-              ),
-            ),
-          ),
-          ListTile(
-            title: const Text('Main Menu'),
-            onTap: () {
-              // Add functionality for Option 1
-            },
-          ),
-          ListTile(
-            title: const Text('Visualization'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const OptionTwoPage()),
-              );
-            },
-          ),
-          // Add more ListTile widgets for additional menu options
         ],
       ),
     );
