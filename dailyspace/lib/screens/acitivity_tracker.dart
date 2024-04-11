@@ -1,15 +1,13 @@
 import 'dart:developer';
-import 'dart:ffi';
-
+import 'dart:async';
 import 'package:dailyspace/custom_classes/taskinfo.dart';
 import 'package:dailyspace/google/google_sign_in_manager.dart';
 import 'package:dailyspace/google/tasks_service.dart';
-
 import 'package:dailyspace/screens/login_screen.dart';
 import 'package:dailyspace/screens/vis.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:intl/intl.dart'; // Import the intl package
 
 import 'package:dailyspace/custom_classes/helper.dart';
 
@@ -23,6 +21,7 @@ class ActivityTracker extends StatefulWidget {
 class _ActivityTrackerState extends State<ActivityTracker> {
   late Map<String, TaskInfo> availableActivities;
   late Set<TaskInfo> activeActivities;
+  Timer? _timer;
 
   final GoogleSignInAccount? account =
       GoogleSignInManager.instance.googleSignIn.currentUser;
@@ -36,15 +35,26 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     availableActivities = {};
     activeActivities = {};
     availableCalendars = [];
-    _fetchCalenders();
+    _fetchCalendars();
     _fetchActivities();
+
+    // Update datetime every second
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {});
+    });
   }
 
-  Future<void> _fetchCalenders() async {
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchCalendars() async {
     availableCalendars.clear();
     final calendars = await TaskService.fetchCalendars(account);
     setState(() {
-      calendars.forEach((title, valie) {
+      calendars.forEach((title, value) {
         log(title);
         availableCalendars.add(title);
       });
@@ -65,14 +75,6 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     });
   }
 
-  void _startTask() {
-    // Implement functionality for Start Task
-  }
-
-  void _endTask() {
-    // Implement functionality for End Task
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -81,7 +83,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
   }
 
   Widget _buildBody() {
-    double space_between = MediaQuery.of(context).size.height * 0.13;
+    double spaceBetween = MediaQuery.of(context).size.height * 0.13;
     return Container(
       decoration: const BoxDecoration(color: Color(0xFFFFFFFF)),
       child: Column(
@@ -89,13 +91,13 @@ class _ActivityTrackerState extends State<ActivityTracker> {
           _buildAppBar(),
           _buildAvailableActivities(),
           SizedBox(
-            height: space_between,
+            height: spaceBetween,
           ),
-          _build_start_task(),
+          _buildStartTask(),
           SizedBox(
-            height: space_between,
+            height: spaceBetween,
           ),
-          _build_waiting_to_finish()
+          _buildWaitingToFinish()
         ],
       ),
     );
@@ -144,13 +146,29 @@ class _ActivityTrackerState extends State<ActivityTracker> {
         },
       ),
       actions: [
+        StreamBuilder<DateTime>(
+          stream: currentTimeStream(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return Text(
+                DateFormat('EEEE, dd/MM HH:mm:ss').format(snapshot.data!),
+                style: TextStyle(
+                  fontSize: 17.0,
+                  fontWeight: FontWeight.normal,
+                ),
+              );
+            } else {
+              return SizedBox(); // Return an empty widget if data is not available yet
+            }
+          },
+        ),
         IconButton(
           onPressed: () async {
             _openCalendarOverlay();
           },
           icon: const Icon(Icons.calendar_month),
           color: Colors.black,
-          tooltip: "Chose calendars to fetch events from",
+          tooltip: "Choose calendars to fetch events from",
         ),
         IconButton(
           onPressed: () async {
@@ -175,29 +193,66 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     );
   }
 
+  Stream<DateTime> currentTimeStream() async* {
+    while (true) {
+      await Future.delayed(Duration(seconds: 1));
+      yield DateTime.now();
+    }
+  }
+
   Widget _buildAvailableActivities() {
-    // Calculate the maximum height for the available activities section
     double maxHeight = MediaQuery.of(context).size.height * 0.13;
-    return SizedBox(
-      height: maxHeight,
-      child: Container(
-        decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: Colors.black, width: 1.0),
-            top: BorderSide(color: Colors.black, width: 1.0), // Line below
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                'Available Activities',
+                style: TextStyle(
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(width: 20),
+              Text(
+                _getFormattedDate(),
+                style: TextStyle(
+                  fontSize: 17.0,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+            ],
           ),
         ),
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          itemCount: availableActivities.length,
-          itemBuilder: (context, index) {
-            final task = availableActivities.values.elementAt(index);
-            log(task.toString());
-            return _buildTaskContainer(task.title, task.due, task.colorId);
-          },
+        SizedBox(
+          height: maxHeight,
+          child: Container(
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: availableActivities.length,
+              itemBuilder: (context, index) {
+                final task = availableActivities.values.elementAt(index);
+                log(task.toString());
+                return _buildTaskContainer(task.title, task.due, task.colorId);
+              },
+            ),
+          ),
         ),
-      ),
+      ],
     );
+  }
+
+  String _getFormattedDate() {
+    DateTime now = DateTime.now();
+    DateFormat dateFormat = DateFormat('EEEE, dd/MM HH:mm:ss');
+    return dateFormat.format(now);
   }
 
   Widget _buildTaskContainer(String title, String? due, String colorId) {
@@ -234,7 +289,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     );
   }
 
-  Widget _build_start_task() {
+  Widget _buildStartTask() {
     double width = MediaQuery.of(context).size.width * 0.9;
     return Container(
       width: width,
@@ -293,7 +348,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     );
   }
 
-  Widget _build_waiting_to_finish() {
+  Widget _buildWaitingToFinish() {
     double width = MediaQuery.of(context).size.width * 0.9;
     return Container(
       width: width,
@@ -498,8 +553,6 @@ class _CalendarOverlayDialogState extends State<CalendarOverlayDialog> {
 
   @override
   void dispose() {
-    // Ensure that _newSelectedCalendars is set to selectedCalendars
-    // when the dialog is dismissed
     _newSelectedCalendars = widget.selectedCalendars;
     super.dispose();
   }
@@ -507,23 +560,17 @@ class _CalendarOverlayDialogState extends State<CalendarOverlayDialog> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Ensure that _newSelectedCalendars is set to selectedCalendars
-    // when the dialog is dismissed
     _newSelectedCalendars = widget.selectedCalendars;
   }
 
   @override
   void didUpdateWidget(CalendarOverlayDialog oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Ensure that _newSelectedCalendars is set to selectedCalendars
-    // when the dialog is dismissed
     _newSelectedCalendars = widget.selectedCalendars;
   }
 
   @override
   void setState(VoidCallback fn) {
-    // Ensure that _newSelectedCalendars is set to selectedCalendars
-    // when the dialog is dismissed
     _newSelectedCalendars = widget.selectedCalendars;
     super.setState(fn);
   }

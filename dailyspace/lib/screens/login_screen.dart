@@ -22,6 +22,7 @@ class LoginScreen extends StatelessWidget {
             GoogleAuthButton(
               onPressed: () {
                 _signInWithGoogle(context);
+                // _testCase(context);
               },
             ),
           ],
