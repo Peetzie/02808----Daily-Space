@@ -2,7 +2,7 @@ import 'dart:developer';
 import 'dart:async';
 import 'package:dailyspace/custom_classes/taskinfo.dart';
 import 'package:dailyspace/google/google_sign_in_manager.dart';
-import 'package:dailyspace/google/tasks_service.dart';
+import 'package:dailyspace/google/google_services.dart';
 import 'package:dailyspace/screens/login_screen.dart';
 import 'package:dailyspace/screens/vis.dart';
 import 'package:flutter/material.dart';
@@ -53,7 +53,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
 
   Future<void> _fetchCalendars() async {
     availableCalendars.clear();
-    final calendars = await TaskService.fetchCalendars(account);
+    final calendars = await GoogleServices.fetchCalendars(account);
     setState(() {
       calendars.forEach((title, value) {
         log(title);
@@ -67,8 +67,8 @@ class _ActivityTrackerState extends State<ActivityTracker> {
       availableActivities.clear();
       earlyStartActivities.clear(); // Clear the earlyStartActivities list
 
-      final tasks =
-          await TaskService.fetchTasksFromCalendar(account, selectedCalendars);
+      final tasks = await GoogleServices.fetchTasksFromCalendar(
+          account, selectedCalendars);
       final now = DateTime.now();
 
       setState(() {

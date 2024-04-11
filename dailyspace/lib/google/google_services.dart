@@ -4,7 +4,7 @@ import 'dart:developer';
 import 'package:dailyspace/google/google_http_client.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-class TaskService {
+class GoogleServices {
   static Future<Map<String, Object>> fetchCalendars(
       GoogleSignInAccount? account) async {
     if (account != null) {
