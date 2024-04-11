@@ -73,24 +73,52 @@ class _ActivityTrackerState extends State<ActivityTracker> {
 
       setState(() {
         tasks.values.forEach((task) {
-          if (task['due'] == 'full_day') {
-            earlyStartActivities.add(
-                TaskInfo(task['taskId'], task['title'], '', task['colorId']));
-          } else {
-            try {
-              final taskDue = DateTime.parse(task['due']);
-              if (taskDue.isAfter(now) &&
-                  taskDue.difference(now).inMinutes <= 30) {
+          try {
+            DateTime taskStart;
+            if (task['start'].contains("T")) {
+              // If the date format is 2024-04-11T11:05:48.576Z
+              taskStart = DateTime.parse(task['start']);
+              final difference = taskStart.difference(now).inMinutes;
+
+              if (DateFormat('yyyy-MM-dd').format(taskStart) ==
+                  DateFormat('yyyy-MM-dd').format(now)) {
+                if (difference.abs() <= 30) {
+                  // Add to earlyStartActivities if within 30 minutes
+                  earlyStartActivities.add(TaskInfo(
+                      task['taskId'],
+                      task['title'],
+                      task['start'],
+                      task['end'],
+                      task['colorId']));
+                } else {
+                  availableActivities[task['taskId']] =
+                      availableActivities[task['taskId']] = TaskInfo(
+                          task['taskId'],
+                          task['title'],
+                          task['start'],
+                          task['end'],
+                          task['colorId']);
+                }
+              } else {
+                // Add to availableActivities if not today
+                availableActivities[task['taskId']] = TaskInfo(task['taskId'],
+                    task['title'], task['start'], task['end'], task['colorId']);
+              }
+            } else {
+              // If the date format is 24-04-11
+              taskStart = DateFormat('yy-MM-dd').parse(task['start']);
+              if (DateFormat('yyyy-MM-dd').format(taskStart) ==
+                  DateFormat('yyyy-MM-dd').format(now)) {
                 earlyStartActivities.add(TaskInfo(task['taskId'], task['title'],
-                    task['due'], task['colorId']));
+                    task['start'], task['end'], task['colorId']));
               } else {
                 availableActivities[task['taskId']] = TaskInfo(task['taskId'],
-                    task['title'], task['due'], task['colorId']);
+                    task['title'], task['start'], task['end'], task['colorId']);
               }
-            } catch (e) {
-              // Handle the error if the task['due'] is not in a valid DateTime format
-              log("Error parsing date: ${e.toString()}");
             }
+          } catch (e) {
+            // Handle the error if the task['start'] is not in a valid DateTime format
+            log("Error parsing date: ${e.toString()}");
           }
         });
       });
@@ -250,7 +278,9 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               itemCount: availableActivities.length,
               itemBuilder: (context, index) {
                 final task = availableActivities.values.elementAt(index);
-                return _buildTaskContainer(task.title, task.due, task.colorId);
+
+                return _buildTaskContainer(
+                    task.title, task.start, task.colorId);
               },
             ),
           ),
@@ -265,7 +295,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     return dateFormat.format(now);
   }
 
-  Widget _buildTaskContainer(String title, String? due, String colorId) {
+  Widget _buildTaskContainer(String title, String? start, String colorId) {
     return Container(
       height: 10,
       width: 100,
@@ -285,9 +315,9 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                 fontSize: 16,
               ),
             ),
-            if (due != "") // Check if due date is not empty
+            if (start != "") // Check if start date is not empty
               Text(
-                TimeFormatter.formatTime(due),
+                TimeFormatter.formatTime(start),
                 style: const TextStyle(
                   color: Colors.black,
                   fontSize: 14,
@@ -342,7 +372,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               itemCount: earlyStartActivities.length,
               itemBuilder: (context, index) {
                 final task = earlyStartActivities[index];
-                String? dueTime = task.due;
+                String? startTime = task.start;
                 String colorId = task.colorId;
                 return Container(
                   margin: EdgeInsets.symmetric(vertical: 4.0),
@@ -362,7 +392,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                       style:
                           TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                     ),
-                    subtitle: dueTime != null ? Text(dueTime) : null,
+                    subtitle: startTime != null ? Text(startTime) : null,
                   ),
                 );
               },

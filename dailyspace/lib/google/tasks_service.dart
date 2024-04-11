@@ -96,8 +96,8 @@ class TaskService {
       String updated = item['updated'] ?? "";
       String notes = item['description'] ?? "";
       // Check if the event has a specific time or just a date
-      String due = item['start']['dateTime'] ??
-          (item['start']['date'] != null ? 'full_day' : '');
+      String start = item['start']['dateTime'] ?? (item['start']['date'] ?? "");
+      String end = item['end']['dateTime'] ?? (item['end']['date'] ?? "");
 
       // Associate task with list name and list ID
       tasksDictionary[taskId] = {
@@ -105,7 +105,8 @@ class TaskService {
         'title': title,
         'updated': updated,
         'notes': notes,
-        'due': due,
+        'start': start,
+        'end': end,
         'calendarName': calendarName,
         'calendarID': calendarId,
         'colorId': colorId

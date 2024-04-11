@@ -6,7 +6,9 @@ import 'package:intl/intl.dart';
 class TimeFormatter {
   static String formatTime(String? datetimeStr) {
     if (datetimeStr != null && datetimeStr.isNotEmpty) {
-      if (datetimeStr == "full_day") {
+      // Check if the input is in the format "yyyy-MM-dd"
+      RegExp dateRegex = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+      if (dateRegex.hasMatch(datetimeStr)) {
         return "";
       } else {
         DateTime dateTime = DateTime.parse(datetimeStr).toLocal();
@@ -14,8 +16,8 @@ class TimeFormatter {
         String formattedTime = DateFormat('HH:mm').format(dateTime);
         return formattedTime;
       }
-    } else
-      return "";
+    }
+    return "";
   }
 }
 // Dart Color Definitions for Flutter
