@@ -18,13 +18,14 @@ class ActivityTracker extends StatefulWidget {
   _ActivityTrackerState createState() => _ActivityTrackerState();
 }
 
+final GoogleSignInAccount? account =
+    GoogleSignInManager.instance.googleSignIn.currentUser;
+
 class _ActivityTrackerState extends State<ActivityTracker> {
   late Map<String, TaskInfo> availableActivities;
   late Set<TaskInfo> activeActivities;
   Timer? _timer;
   late List<TaskInfo> earlyStartActivities;
-  final GoogleSignInAccount? account =
-      GoogleSignInManager.instance.googleSignIn.currentUser;
 
   late List<String> availableCalendars;
   Set<String> selectedCalendars = {};
@@ -200,14 +201,6 @@ class _ActivityTrackerState extends State<ActivityTracker> {
         },
       ),
       actions: [
-        IconButton(
-          onPressed: () async {
-            await GoogleServices.createCalendars(account);
-          },
-          icon: const Icon(Icons.add),
-          color: Colors.black,
-          tooltip: "Create default calendar sortings",
-        ),
         IconButton(
           onPressed: () async {
             _openCalendarOverlay();
@@ -500,8 +493,30 @@ class _CalendarOverlayDialogState extends State<CalendarOverlayDialog> {
 
   @override
   Widget build(BuildContext context) {
+    double width = MediaQuery.of(context).size.width * 0.8;
     return AlertDialog(
-      title: Text('Select Calendar'),
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Select Calendar(s)',
+            style:
+                TextStyle(fontSize: width * 0.06, fontWeight: FontWeight.bold),
+          ),
+          IconButton(
+            icon: Icon(Icons.download),
+            onPressed: () {
+              _fetchCalendars();
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.add),
+            onPressed: () {
+              _openAddCalendarOverlay();
+            },
+          ),
+        ],
+      ),
       content: SizedBox(
         width: double.maxFinite,
         child: ListView.builder(
@@ -534,8 +549,48 @@ class _CalendarOverlayDialogState extends State<CalendarOverlayDialog> {
           },
           child: Text('OK'),
         ),
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop(_newSelectedCalendars);
+          },
+          child: Text('Cancel'),
+        ),
       ],
     );
+  }
+
+  void _openAddCalendarOverlay() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AddCalendarOverlay();
+      },
+    );
+  }
+
+  Future<void> _fetchCalendars() async {
+    try {
+      // Fetch new calendars
+      final calendars = await GoogleServices.fetchCalendars(account);
+      setState(() {
+        // Update available calendars
+        widget.availableCalendars.clear();
+        calendars.forEach((title, value) {
+          widget.availableCalendars.add(title);
+        });
+      });
+    } catch (e) {
+      // Handle potential errors from the fetch call
+      print("Error fetching calendars: $e");
+    }
+  }
+
+  void _updateSelectedCalendars() {
+    // Implement the logic to update selected calendars here
+    setState(() {
+      // Update the selected calendars
+      _newSelectedCalendars = widget.selectedCalendars;
+    });
   }
 
   @override
@@ -560,5 +615,169 @@ class _CalendarOverlayDialogState extends State<CalendarOverlayDialog> {
   void setState(VoidCallback fn) {
     _newSelectedCalendars = widget.selectedCalendars;
     super.setState(fn);
+  }
+}
+
+class AddCalendarOverlay extends StatefulWidget {
+  final Map<String, int> calendarData = {
+    'Food + nutrition': 7,
+    'Fitness': 4,
+    'Office Work': 9,
+    'Personal Time': 16,
+    'Family': 24,
+    'Mindfulness': 16,
+    'Rest + travel': 1,
+    'Digital life': 8,
+  };
+
+  AddCalendarOverlay({Key? key}) : super(key: key);
+
+  @override
+  _AddCalendarOverlayState createState() => _AddCalendarOverlayState();
+}
+
+class _AddCalendarOverlayState extends State<AddCalendarOverlay> {
+  Map<String, String> _selectedColors = {};
+  Map<String, bool> _selectedCalendars = {};
+  bool _isLoading = false;
+  double _progress = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.calendarData.forEach((calendarName, colorId) {
+      _selectedColors[calendarName] = 'Color $colorId';
+      _selectedCalendars[calendarName] = false; // Initialize all as unselected
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Add Calendar'),
+      content: _isLoading
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 20),
+                LinearProgressIndicator(value: _progress), // Progress bar
+                SizedBox(height: 20),
+                Text('${(_progress * 100).toStringAsFixed(0)}% completed'),
+              ],
+            )
+          : buildContent(),
+      actions: !_isLoading
+          ? <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: createCalendars,
+                child: Text('OK'),
+              ),
+            ]
+          : null,
+    );
+  }
+
+  Widget buildContent() {
+    return SizedBox(
+      width: double.maxFinite,
+      child: ListView.builder(
+        shrinkWrap: true,
+        itemCount: widget.calendarData.length,
+        itemBuilder: (BuildContext context, int index) {
+          final calendarName = widget.calendarData.keys.elementAt(index);
+          final selectedColor = _selectedColors[calendarName]!;
+          final isSelected = _selectedCalendars[calendarName] ?? false;
+
+          return Row(
+            children: [
+              DropdownButton<String>(
+                value: selectedColor,
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedColors[calendarName] = newValue!;
+                  });
+                },
+                items: _buildColorDropdownItems(selectedColor),
+              ),
+              Expanded(child: Text(calendarName)),
+              Checkbox(
+                value: isSelected,
+                onChanged: (bool? newValue) {
+                  setState(() {
+                    _selectedCalendars[calendarName] = newValue!;
+                  });
+                },
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  List<DropdownMenuItem<String>> _buildColorDropdownItems(String currentColor) {
+    List<String> usedColors = _selectedColors.values.toList();
+    List<DropdownMenuItem<String>> items = [];
+
+    for (int i = 1; i <= 24; i++) {
+      String colorValue = 'Color $i';
+      if (!usedColors.contains(colorValue) || colorValue == currentColor) {
+        items.add(DropdownMenuItem(
+          value: colorValue,
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: getColorFromId(i.toString()),
+                radius: 8,
+              ),
+              SizedBox(width: 8),
+            ],
+          ),
+        ));
+      }
+    }
+
+    return items;
+  }
+
+  Future<void> createCalendars() async {
+    setState(() => _isLoading = true);
+    _progress = 0.0; // Initialize progress
+
+    final selectedCalendarsWithColors = getSelectedCalendarsWithColors();
+    final total = selectedCalendarsWithColors.length;
+    var completed = 0;
+
+    for (var entry in selectedCalendarsWithColors.entries) {
+      Map<String, int> calendarInfo = {};
+      calendarInfo[entry.key] = entry.value;
+      await GoogleServices.createCalendar(account, calendarInfo);
+      completed++;
+      setState(() {
+        _progress = completed / total;
+      });
+    }
+
+    setState(() => _isLoading = false);
+    Navigator.of(context)
+        .pop(); // Optionally, close the dialog or navigate after completion
+  }
+
+  Map<String, int> getSelectedCalendarsWithColors() {
+    Map<String, int> selectedCalendarsWithColors = {};
+    _selectedCalendars.forEach((key, value) {
+      if (value) {
+        final colorId =
+            int.parse(_selectedColors[key]!.replaceAll('Color ', ''));
+        selectedCalendarsWithColors[key] = colorId;
+      }
+    });
+
+    return selectedCalendarsWithColors;
   }
 }

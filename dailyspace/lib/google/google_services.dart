@@ -27,28 +27,32 @@ class GoogleServices {
     }
   }
 
-  static Future<void> createCalendars(GoogleSignInAccount? account) async {
+  static Future<void> createCalendar(
+      GoogleSignInAccount? account, Map<String, int> calendarData) async {
     if (account != null) {
       final authHeaders = await account.authHeaders;
       final googleHttpClient = GoogleHttpClient(authHeaders);
-      final url = Uri.parse('https://www.googleapis.com/calendar/v3/calendars');
+      final baseUrl = 'https://www.googleapis.com/calendar/v3/calendars';
 
-      // JSON object for the request body
-      final Map<String, dynamic> requestBody = {'summary': 'TestCalendar33333'};
+      for (final entry in calendarData.entries) {
+        final name = entry.key;
+        final colorId = entry.value;
 
-      final response = await googleHttpClient.post(
-        url,
-        body: json.encode(requestBody), // Encode the request body as JSON
-        headers: {
-          'Content-Type': 'application/json'
-        }, // Specify content type as application/json
-      );
+        final url = Uri.parse(baseUrl);
+        final requestBody = {'summary': name, 'colorId': colorId.toString()};
 
-      // Handle the response
-      if (response.statusCode == 200) {
-        print("Calendar 'TestCalendar' created successfully.");
-      } else {
-        print("Failed to create calendar. Status code: ${response.statusCode}");
+        final response = await googleHttpClient.post(
+          url,
+          body: json.encode(requestBody),
+          headers: {'Content-Type': 'application/json'},
+        );
+
+        if (response.statusCode == 200) {
+          print("Calendar '$name' created successfully with colorId: $colorId");
+        } else {
+          print(
+              "Failed to create calendar '$name'. Status code: ${response.statusCode}");
+        }
       }
     }
   }
