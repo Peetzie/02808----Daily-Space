@@ -29,7 +29,7 @@ lib/generated_plugin_registrant.dart
 **/android/local.properties
 **/android/**/GeneratedPluginRegistrant.java
 
-android/src/app/*.json
+/android/src/app/*.json
 
 # iOS/XCode related
 **/ios/**/*.mode1v3
@@ -114,3 +114,4 @@ gradle-app.setting
 *.hprof
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,flutter,gradle
+dailyspace/android/app/google-services.json
