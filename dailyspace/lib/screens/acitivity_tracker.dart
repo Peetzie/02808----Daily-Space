@@ -7,7 +7,7 @@ import 'package:dailyspace/screens/login_screen.dart';
 import 'package:dailyspace/screens/vis.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:intl/intl.dart'; // Import the intl package
+import 'package:intl/intl.dart';
 
 import 'package:dailyspace/custom_classes/helper.dart';
 
@@ -24,6 +24,7 @@ final GoogleSignInAccount? account =
 class _ActivityTrackerState extends State<ActivityTracker> {
   late Map<String, TaskInfo> availableActivities;
   late Set<TaskInfo> activeActivities;
+  late Set<TaskInfo> endedActivities;
   Timer? _timer;
   late List<TaskInfo> earlyStartActivities;
 
@@ -35,6 +36,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     super.initState();
     availableActivities = {};
     activeActivities = {};
+    endedActivities = {};
     availableCalendars = [];
     earlyStartActivities = [];
     _fetchCalendars();
@@ -91,14 +93,6 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                       task['start'],
                       task['end'],
                       task['colorId']));
-                } else {
-                  availableActivities[task['taskId']] =
-                      availableActivities[task['taskId']] = TaskInfo(
-                          task['taskId'],
-                          task['title'],
-                          task['start'],
-                          task['end'],
-                          task['colorId']);
                 }
               } else {
                 // Add to availableActivities if not today
@@ -149,10 +143,11 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               child: Column(
                 children: [
                   _buildAvailableActivities(),
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.015),
                   _buildStartTask(),
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.08),
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.06),
                   _buildWaitingToFinish(),
+                  _buildEndedTask(),
                 ],
               ),
             ),
@@ -240,7 +235,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
   }
 
   Widget _buildAvailableActivities() {
-    double maxHeight = MediaQuery.of(context).size.height * 0.13;
+    double maxHeight = MediaQuery.of(context).size.height * 0.1;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,7 +300,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
 
   Widget _buildTaskContainer(String title, String? start, String colorId) {
     return Container(
-      height: MediaQuery.of(context).size.width * 0.15,
+      height: MediaQuery.of(context).size.width * 0.1,
       width: MediaQuery.of(context).size.width * 0.15,
       margin: EdgeInsets.symmetric(
         horizontal: MediaQuery.of(context).size.width * 0.02,
@@ -394,7 +389,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                   ],
                 ),
               ),
-              SizedBox(height: height * 0.02),
+              SizedBox(height: height * 0.015),
               Flexible(
                 child: ListView.builder(
                   itemCount: earlyStartActivities.length,
@@ -461,8 +456,23 @@ class _ActivityTrackerState extends State<ActivityTracker> {
   }
 
   Widget _buildWaitingToFinish() {
-    double containerHeight = MediaQuery.of(context).size.height * 0.25;
+    double containerHeight = MediaQuery.of(context).size.height * 0.15;
     double containerWidth = MediaQuery.of(context).size.width * 0.9;
+
+    Stream<String> countdownStream(String? start, String? end) async* {
+      if (start == null || end == null) {
+        yield 'Duration Unknown';
+      } else {
+        DateTime startTime = DateTime.parse(start);
+        DateTime endTime = DateTime.parse(end);
+        Duration duration = endTime.difference(startTime);
+        while (true) {
+          await Future.delayed(Duration(minutes: 1));
+          yield "${duration.inHours}h ${(duration.inMinutes % 60).toString().padLeft(2, '0')}m";
+        }
+      }
+    }
+
     return Container(
       width: containerWidth,
       height: containerHeight,
@@ -477,7 +487,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
           Text(
             'Waiting to finish',
             style: TextStyle(
-              fontSize: containerHeight * 0.08,
+              fontSize: containerHeight * 0.1,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -486,59 +496,126 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               itemCount: activeActivities.length,
               itemBuilder: (context, index) {
                 TaskInfo task = activeActivities.elementAt(index);
-                String duration = calculateDuration(task.start, task.end);
-                double taskContainerWidth = containerWidth * 0.35;
-                return Row(
-                  children: [
-                    Container(
-                      width: taskContainerWidth,
-                      margin: EdgeInsets.symmetric(
-                        vertical: containerHeight * 0.01,
-                      ),
-                      decoration: BoxDecoration(
-                          color: getColorFromId(task.colorId),
-                          borderRadius:
-                              BorderRadius.circular(containerWidth * 0.01),
-                          boxShadow: [
-                            BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                spreadRadius: 0,
-                                blurRadius: containerWidth * 0.02,
-                                offset: Offset(0, 2))
-                          ]),
-                      child: ListTile(
-                        title: Text(
-                          "${task.title} - $duration",
-                          style: TextStyle(
-                            fontSize: containerHeight * 0.06,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {
-                            // logic of text button
-                          },
-                          child: Text('Finished'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            backgroundColor: Colors.blue,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
+                return StreamBuilder<String>(
+                    stream: countdownStream(task.start, task.end),
+                    builder: (context, snapshot) {
+                      String countdown = snapshot.hasData
+                          ? snapshot.data!
+                          : calculateCountdown(task.end);
+                      return buildTaskItem(task, countdown);
+                    });
               },
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildEndedTask() {
+    double containerHeight = MediaQuery.of(context).size.height * 0.15;
+    double containerWidth = MediaQuery.of(context).size.width * 0.9;
+    double verticalSpacing = MediaQuery.of(context).size.height * 0.06;
+    return Container(
+      height: containerHeight,
+      width: containerWidth,
+      margin: EdgeInsets.symmetric(
+        vertical: verticalSpacing,
+      ),
+      padding: EdgeInsets.all(containerWidth * 0.05),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!, width: 1.0),
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(
+          'Ended Task',
+          style: TextStyle(
+            fontSize: containerHeight * 0.1,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: endedActivities.length,
+            itemBuilder: (context, index) {
+              TaskInfo task = endedActivities.elementAt(index);
+              return ListTile(
+                title: Text(task.title),
+                trailing: Icon(Icons.check, color: Colors.green),
+              );
+            },
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget buildTaskItem(TaskInfo task, String countdown) {
+    double containerHeight = MediaQuery.of(context).size.height * 0.15;
+    double containerWidth = MediaQuery.of(context).size.width * 0.9;
+    double taskContainerWidth = containerWidth * 0.35;
+
+    return Row(
+      children: [
+        Container(
+          width: taskContainerWidth,
+          margin: EdgeInsets.symmetric(
+            vertical: containerHeight * 0.01,
+          ),
+          decoration: BoxDecoration(
+              color: getColorFromId(task.colorId),
+              borderRadius: BorderRadius.circular(containerWidth * 0.01),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    spreadRadius: 0,
+                    blurRadius: containerWidth * 0.02,
+                    offset: Offset(0, 2))
+              ]),
+          child: ListTile(
+            title: Text(
+              "${task.title} - $countdown",
+              style: TextStyle(
+                fontSize: containerHeight * 0.08,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () {
+                setState(() {
+                  activeActivities.remove(task);
+                  endedActivities.add(task);
+                });
+              },
+              child: Text('Finished'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.blue,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String calculateCountdown(String? end) {
+    if (end == null) {
+      return '0h 0m';
+    }
+    DateTime endTime = DateTime.parse(end);
+    Duration remaining = endTime.difference(DateTime.now());
+    if (remaining.isNegative) {
+      return '0h 0m';
+    } else {
+      return "${remaining.inHours}h ${(remaining.inMinutes % 60).toString().padLeft(2, '0')}m";
+    }
   }
 }
 
