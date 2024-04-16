@@ -299,9 +299,13 @@ class _ActivityTrackerState extends State<ActivityTracker> {
   }
 
   Widget _buildTaskContainer(String title, String? start, String colorId) {
+    // Determine if the task is overdue
+    bool isOverdue =
+        start != null && DateTime.parse(start).isBefore(DateTime.now());
+
     return Container(
-      height: MediaQuery.of(context).size.width * 0.15,
-      width: MediaQuery.of(context).size.width * 0.15,
+      height: MediaQuery.of(context).size.width * 0.23,
+      width: MediaQuery.of(context).size.width * 0.23,
       margin: EdgeInsets.symmetric(
         horizontal: MediaQuery.of(context).size.width * 0.02,
       ),
@@ -309,27 +313,54 @@ class _ActivityTrackerState extends State<ActivityTracker> {
         color: getColorFromId(colorId),
         shape: BoxShape.circle,
       ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: MediaQuery.of(context).size.width * 0.03,
-              ),
-            ),
-            if (start != "") // Check if start date is not empty
+      child: Stack(
+        alignment: Alignment.center,
+        clipBehavior:
+            Clip.none, // Allow children to be rendered outside the container
+        children: [
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
               Text(
-                TimeFormatter.formatTime(start),
+                title,
                 style: TextStyle(
                   color: Colors.black,
-                  fontSize: MediaQuery.of(context).size.width * 0.02,
+                  fontSize: MediaQuery.of(context).size.width * 0.038,
                 ),
               ),
-          ],
-        ),
+              if (start != null &&
+                  start != "") // Check if start date is not empty
+                Text(
+                  TimeFormatter.formatTime(start),
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: MediaQuery.of(context).size.width * 0.03,
+                  ),
+                ),
+            ],
+          ),
+          // Overlay the badge at the bottom right if the task is overdue
+          if (isOverdue)
+            Positioned(
+              right: MediaQuery.of(context).size.width *
+                  0.03, // Adjust position to overlap the border
+              bottom: -MediaQuery.of(context).size.width *
+                  0.01, // Adjust position to overlap the border
+              child: Container(
+                padding: EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 1),
+                ),
+                child: Icon(
+                  Icons.alarm,
+                  size: MediaQuery.of(context).size.width * 0.04,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
