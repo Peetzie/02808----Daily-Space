@@ -369,96 +369,122 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     double height = MediaQuery.of(context).size.height * 0.25;
     double width = MediaQuery.of(context).size.width * 0.9;
 
-    return Container(
-      height: height,
-      width: width,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.black, width: 1.0),
-        borderRadius: BorderRadius.circular(10.0),
-      ),
-      padding: EdgeInsets.all(width * 0.05),
-      child: Column(
-        children: <Widget>[
-          Container(
-            alignment: Alignment.topLeft,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Text(
-                  'Start Task',
-                  style: TextStyle(
-                    fontSize: height * 0.08,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(
-                  height: MediaQuery.of(context).size.width * 0.005,
-                ),
-                Text(
-                  'It is time to start this task',
-                  style: TextStyle(fontSize: height * 0.04),
-                ),
-              ],
-            ),
+    return DragTarget<TaskInfo>(
+      onAccept: (TaskInfo task) {
+        setState(() {
+          earlyStartActivities.add(task);
+          availableActivities.remove(task.taskId);
+        });
+      },
+      builder: (context, candidateData, rejectedData) {
+        return Container(
+          height: height,
+          width: width,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.black, width: 1.0),
+            borderRadius: BorderRadius.circular(10.0),
           ),
-          SizedBox(height: height * 0.02),
-          Flexible(
-            child: ListView.builder(
-              itemCount: earlyStartActivities.length,
-              itemBuilder: (context, index) {
-                final task = earlyStartActivities[index];
-                String? startTime = task.start;
-                String colorId = task.colorId;
-                return Container(
-                  margin: EdgeInsets.symmetric(
-                    vertical: height * 0.01,
-                  ),
-                  decoration: BoxDecoration(
-                      color: getColorFromId(colorId),
-                      borderRadius: BorderRadius.circular(
-                        width * 0.01,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            spreadRadius: 0,
-                            blurRadius: width * 0.02,
-                            offset: Offset(0, 2))
-                      ]),
-                  child: ListTile(
-                    title: Text(
-                      task.title,
+          padding: EdgeInsets.all(width * 0.035),
+          child: Column(
+            children: <Widget>[
+              Container(
+                alignment: Alignment.topLeft,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      'Start Task',
                       style: TextStyle(
-                        fontSize: height * 0.06,
+                        fontSize: height * 0.08,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                );
-              },
-            ),
-          ),
-          SizedBox(height: height * 0.02),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              ElevatedButton(
-                onPressed: () {
-                  // Add functionality for the first button
-                },
-                child: Text('Button 1'),
+                    SizedBox(
+                      height: MediaQuery.of(context).size.width * 0.005,
+                    ),
+                    Text(
+                      'It is time to start this task',
+                      style: TextStyle(fontSize: height * 0.04),
+                    ),
+                  ],
+                ),
               ),
-              ElevatedButton(
-                onPressed: () {
-                  // Add functionality for the second button
-                },
-                child: Text('Button 2'),
+              SizedBox(height: height * 0.02),
+              Expanded(
+                child: earlyStartActivities.isEmpty
+                    ? Center(child: Text("No tasks are about to start."))
+                    : ListView.builder(
+                        itemCount: earlyStartActivities.length,
+                        itemBuilder: (context, index) {
+                          final task = earlyStartActivities[index];
+                          return Container(
+                            height: MediaQuery.of(context).size.height *
+                                0.03, // Set fixed height for each task container
+                            margin: EdgeInsets.symmetric(
+                                vertical: 2.0, horizontal: 2.0),
+                            decoration: BoxDecoration(
+                              color: getColorFromId(task.colorId),
+                              borderRadius: BorderRadius.circular(8),
+                              border:
+                                  Border.all(color: Colors.black54, width: 1),
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 10), // Horizontal padding
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      task.title,
+                                      style: TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: width * 0.04),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  Text(
+                                    calculateDuration(task.start, task.end),
+                                    style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: width * 0.04),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+              SizedBox(height: height * 0.02),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <Widget>[
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        activeActivities.addAll(Set.from(earlyStartActivities));
+                        earlyStartActivities.clear();
+                      });
+                    },
+                    child: Text('Start Now!'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      // Add functionality for the "Later" button if necessary
+                    },
+                    child: Text('Later'),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -502,6 +528,16 @@ class _ActivityTrackerState extends State<ActivityTracker> {
         ],
       ),
     );
+  }
+
+  String calculateDuration(String? start, String? end) {
+    if (start == null || end == null) {
+      return 'Duration Unknown';
+    }
+    DateTime startTime = DateTime.parse(start);
+    DateTime endTime = DateTime.parse(end);
+    Duration duration = endTime.difference(startTime);
+    return "${duration.inHours}h ${duration.inMinutes % 60}m";
   }
 }
 
