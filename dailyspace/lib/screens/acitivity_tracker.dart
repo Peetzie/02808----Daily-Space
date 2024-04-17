@@ -22,6 +22,7 @@ class ActivityTracker extends StatefulWidget {
 
 final GoogleSignInAccount? account =
     GoogleSignInManager.instance.googleSignIn.currentUser;
+final FirebaseManager firebaseManager = FirebaseManager();
 
 class _ActivityTrackerState extends State<ActivityTracker> {
   late Map<String, TaskInfo> availableActivities;
@@ -470,7 +471,9 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                     onPressed: () {
                       setState(() {
                         earlyStartActivities.forEach((task) {
-                          addFirebaseEvent(FirebaseEvent.fromTaskInfo(task));
+                          firebaseManager.addFirebaseEvent(
+                              FirebaseEvent.fromTaskInfo(
+                                  task, null, null, null));
                         });
                         activeActivities.addAll(Set.from(earlyStartActivities));
                         earlyStartActivities.clear();

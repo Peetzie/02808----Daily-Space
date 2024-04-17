@@ -31,16 +31,17 @@ class FirebaseEvent {
     };
   }
 
-  static FirebaseEvent fromTaskInfo(TaskInfo task) {
+  static FirebaseEvent fromTaskInfo(
+      TaskInfo task, DateTime? startedAt, DateTime? endedAt, String? duration) {
     return FirebaseEvent(
         task.taskId,
         task.title,
         task.start,
         task.end,
         task.colorId,
-        null, // Or set as needed
-        null, // Or set as needed
-        null // Or calculate as needed
+        startedAt as String?, // Or set as needed
+        endedAt as String?, // Or set as needed
+        duration // Or calculate as needed
         );
   }
 }

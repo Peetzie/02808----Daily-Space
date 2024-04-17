@@ -58,7 +58,11 @@ class LoginScreen extends StatelessWidget {
 
         if (user != null) {
           log('Signed in with Google: ${user.uid}');
-          addUser(); // Example call
+          FirebaseManager firebaseManager = FirebaseManager();
+          await firebaseManager.addUser().catchError((error) {
+            log("Failed to add user to Firestore: $error");
+          });
+
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const ActivityTracker()),
