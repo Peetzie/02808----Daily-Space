@@ -24,6 +24,35 @@ class FirebaseManager {
     }
   }
 
+  Future<void> saveSelectedCalendars(Set<String> selectedCalendars) async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      // Reference to the user's calendars document
+      DocumentReference calendarsDoc = _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('settings')
+          .doc('calendars');
+
+      // Convert the Set to a List for Firebase compatibility
+      List<String> calendarList = selectedCalendars.toList();
+
+      // Set the selected calendars in Firestore
+      return calendarsDoc
+          .set({
+            'selectedCalendars': calendarList,
+            'updatedAt':
+                FieldValue.serverTimestamp() // Timestamp for the update
+          })
+          .then((value) => log("Selected calendars saved successfully"))
+          .catchError(
+              (error) => log("Failed to save selected calendars: $error"));
+    } else {
+      log("User is not authenticated");
+      throw Exception('User is not authenticated');
+    }
+  }
+
   Future<void> addUser() async {
     User? user = _auth.currentUser;
     if (user != null) {

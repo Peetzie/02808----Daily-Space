@@ -616,8 +616,9 @@ class _CalendarOverlayDialogState extends State<CalendarOverlayDialog> {
       ),
       actions: <Widget>[
         TextButton(
-          onPressed: () {
+          onPressed: () async {
             _newSelectedCalendars = widget.selectedCalendars;
+            await firebaseManager.saveSelectedCalendars(_newSelectedCalendars!);
             Navigator.of(context).pop(_newSelectedCalendars);
           },
           child: Text('OK'),
