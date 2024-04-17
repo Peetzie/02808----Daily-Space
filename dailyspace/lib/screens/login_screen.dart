@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'package:auth_buttons/auth_buttons.dart';
+import 'package:dailyspace/google/firebase_handler.dart';
 import 'package:dailyspace/screens/acitivity_tracker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -57,7 +58,7 @@ class LoginScreen extends StatelessWidget {
 
         if (user != null) {
           log('Signed in with Google: ${user.uid}');
-          addUser("test", "test@gmail.com", 21); // Example call
+          addUser(); // Example call
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const ActivityTracker()),
@@ -70,27 +71,6 @@ class LoginScreen extends StatelessWidget {
       }
     } catch (error) {
       log('Error signing in with Google: $error');
-    }
-  }
-
-  Future<void> addUser(String name, String email, int age) {
-    FirebaseFirestore firestore = FirebaseFirestore.instance;
-    User? user = FirebaseAuth.instance.currentUser;
-
-    if (user != null) {
-      DocumentReference userDoc = firestore.collection('users').doc(user.uid);
-
-      return userDoc
-          .set({
-            'name': name,
-            'email': email,
-            'age': age,
-          })
-          .then((value) => log("User added successfully!"))
-          .catchError((error) => log("Failed to add user: $error"));
-    } else {
-      log("User is not authenticated");
-      throw Exception('User is not authenticated');
     }
   }
 }

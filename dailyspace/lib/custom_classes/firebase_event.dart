@@ -1,3 +1,5 @@
+import 'package:dailyspace/custom_classes/taskinfo.dart';
+
 class FirebaseEvent {
   final String taskId;
   final String taskTitle;
@@ -14,5 +16,31 @@ class FirebaseEvent {
   @override
   String toString() {
     return 'FirebaseEvent(taskId: $taskId, title: $taskTitle, start: $startTime,end:$endTime, colorId: $colorId)';
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'taskId': taskId,
+      'taskTitle': taskTitle,
+      'startTime': startTime,
+      'endTime': endTime,
+      'colorId': colorId,
+      'startedAt': startedAt,
+      'endedAt': endedAt,
+      'duration': duration,
+    };
+  }
+
+  static FirebaseEvent fromTaskInfo(TaskInfo task) {
+    return FirebaseEvent(
+        task.taskId,
+        task.title,
+        task.start,
+        task.end,
+        task.colorId,
+        null, // Or set as needed
+        null, // Or set as needed
+        null // Or calculate as needed
+        );
   }
 }

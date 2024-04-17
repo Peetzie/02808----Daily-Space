@@ -1,6 +1,8 @@
 import 'dart:developer';
 import 'dart:async';
+import 'package:dailyspace/custom_classes/firebase_event.dart';
 import 'package:dailyspace/custom_classes/taskinfo.dart';
+import 'package:dailyspace/google/firebase_handler.dart';
 import 'package:dailyspace/google/google_sign_in_manager.dart';
 import 'package:dailyspace/google/google_services.dart';
 import 'package:dailyspace/screens/login_screen.dart';
@@ -467,6 +469,9 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                   ElevatedButton(
                     onPressed: () {
                       setState(() {
+                        earlyStartActivities.forEach((task) {
+                          addFirebaseEvent(FirebaseEvent.fromTaskInfo(task));
+                        });
                         activeActivities.addAll(Set.from(earlyStartActivities));
                         earlyStartActivities.clear();
                       });
@@ -474,9 +479,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                     child: Text('Start Now!'),
                   ),
                   ElevatedButton(
-                    onPressed: () {
-                      // Add functionality for the "Later" button if necessary
-                    },
+                    onPressed: () async {},
                     child: Text('Later'),
                   ),
                 ],
