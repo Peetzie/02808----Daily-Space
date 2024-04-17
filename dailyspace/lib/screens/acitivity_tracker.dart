@@ -405,7 +405,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                     ),
                     Text(
                       'It is time to start this task',
-                      style: TextStyle(fontSize: height * 0.04),
+                      style: TextStyle(fontSize: height * 0.07),
                     ),
                   ],
                 ),
@@ -425,7 +425,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                                 vertical: 2.0, horizontal: 2.0),
                             decoration: BoxDecoration(
                               color: getColorFromId(task.colorId),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(2),
                               border:
                                   Border.all(color: Colors.black54, width: 1),
                             ),
