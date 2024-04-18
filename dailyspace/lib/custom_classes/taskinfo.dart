@@ -4,16 +4,8 @@ class TaskInfo {
   final String? start;
   final String? end;
   final String colorId;
-  DateTime? actualStartTime;
 
-  TaskInfo(
-    this.taskId,
-    this.title,
-    this.start,
-    this.end,
-    this.colorId, {
-    this.actualStartTime,
-  });
+  TaskInfo(this.taskId, this.title, this.start, this.end, this.colorId);
 
   @override
   String toString() {

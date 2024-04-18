@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:dailyspace/custom_classes/taskinfo.dart';
 import 'package:dailyspace/google/google_sign_in_manager.dart';
 import 'package:dailyspace/google/google_services.dart';
-import 'package:dailyspace/screens/login_screen.dart';
+import 'package:dailyspace/main.dart';
 import 'package:dailyspace/screens/vis.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -28,8 +28,29 @@ class _ActivityTrackerState extends State<ActivityTracker> {
   Timer? _timer;
   late List<TaskInfo> earlyStartActivities;
 
+  String calculateDuration(String? start, String? end) {
+    if (start == null || end == null) {
+      return 'Duration Unknown';
+    }
+    DateTime startTime = DateTime.parse(start);
+    DateTime endTime = DateTime.parse(end);
+    Duration duration = endTime.difference(startTime);
+    return "${duration.inHours}h ${duration.inMinutes % 60}m";
+  }
+
+  int calculateCountdown(String? end) {
+    if (end == null) {
+      return 0;
+    }
+    DateTime endTime = DateTime.parse(end);
+    Duration remaining = endTime.difference(DateTime.now());
+    return remaining.isNegative ? 0 : remaining.inMinutes;
+  }
+
   late List<String> availableCalendars;
   Set<String> selectedCalendars = {};
+
+  int _counter = 0;
 
   @override
   void initState() {
@@ -42,8 +63,18 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     _fetchCalendars();
     _fetchActivities();
 
-    // Update datetime every second
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+    if (availableActivities.isNotEmpty) {
+      String? endTime = availableActivities
+          .values.first.end; // Assuming there is at least one activity
+      _counter = calculateCountdown(endTime);
+    }
+    // Update datetime every minute
+    _timer = Timer.periodic(Duration(minutes: 1), (timer) {
+      if (_counter > 0) {
+        _counter--;
+      } else {
+        _timer?.cancel();
+      }
       setState(() {});
     });
   }
@@ -218,7 +249,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
             await GoogleSignInManager.instance.googleSignIn.signOut();
             // Navigate back to login screen
             Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => const LoginScreen()));
+                MaterialPageRoute(builder: (context) => const MainScreen()));
           },
           icon: const Icon(Icons.logout),
           color: Colors.black,
@@ -334,16 +365,6 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     );
   }
 
-  String calculateDuration(String? start, String? end) {
-    if (start == null || end == null) {
-      return 'Duration Unknown';
-    }
-    DateTime startTime = DateTime.parse(start);
-    DateTime endTime = DateTime.parse(end);
-    Duration duration = endTime.difference(startTime);
-    return "${duration.inHours}h ${duration.inMinutes % 60}m";
-  }
-
   Widget _buildStartTask() {
     double height = MediaQuery.of(context).size.height * 0.25;
     double width = MediaQuery.of(context).size.width * 0.9;
@@ -442,7 +463,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                   ),
                   ElevatedButton(
                     onPressed: () {
-                      // Add functionality for the "Later" button if necessary
+                      _showStartLaterDialog(context);
                     },
                     child: Text('Later'),
                   ),
@@ -455,23 +476,49 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     );
   }
 
+  void _showStartLaterDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Why do you want to start later?'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Reason',
+                    suffixIcon: Icon(Icons.close),
+                  ),
+                ),
+                ListTile(title: Text('Menu item')),
+                ListTile(title: Text('Menu item')),
+                ListTile(title: Text('Menu item')),
+                ListTile(title: Text('Menu item')),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Yes'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              style: TextButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildWaitingToFinish() {
     double containerHeight = MediaQuery.of(context).size.height * 0.15;
     double containerWidth = MediaQuery.of(context).size.width * 0.9;
-
-    Stream<String> countdownStream(String? start, String? end) async* {
-      if (start == null || end == null) {
-        yield 'Duration Unknown';
-      } else {
-        DateTime startTime = DateTime.parse(start);
-        DateTime endTime = DateTime.parse(end);
-        Duration duration = endTime.difference(startTime);
-        while (true) {
-          await Future.delayed(Duration(minutes: 1));
-          yield "${duration.inHours}h ${(duration.inMinutes % 60).toString().padLeft(2, '0')}m";
-        }
-      }
-    }
 
     return Container(
       width: containerWidth,
@@ -496,14 +543,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               itemCount: activeActivities.length,
               itemBuilder: (context, index) {
                 TaskInfo task = activeActivities.elementAt(index);
-                return StreamBuilder<String>(
-                    stream: countdownStream(task.start, task.end),
-                    builder: (context, snapshot) {
-                      String countdown = snapshot.hasData
-                          ? snapshot.data!
-                          : calculateCountdown(task.end);
-                      return buildTaskItem(task, countdown);
-                    });
+                return buildTaskItem(task, "$_counter");
               },
             ),
           ),
@@ -556,6 +596,11 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     double containerWidth = MediaQuery.of(context).size.width * 0.9;
     double taskContainerWidth = containerWidth * 0.35;
 
+    int hours = _counter ~/ 60;
+    int minutes = _counter % 60;
+    String formattedCountdown =
+        "${hours}h ${minutes.toString().padLeft(2, '0')}m";
+
     return Row(
       children: [
         Container(
@@ -575,7 +620,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               ]),
           child: ListTile(
             title: Text(
-              "${task.title} - $countdown",
+              "${task.title} - $formattedCountdown",
               style: TextStyle(
                 fontSize: containerHeight * 0.08,
                 fontWeight: FontWeight.bold,
@@ -584,38 +629,74 @@ class _ActivityTrackerState extends State<ActivityTracker> {
           ),
         ),
         Expanded(
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () {
-                setState(() {
-                  activeActivities.remove(task);
-                  endedActivities.add(task);
-                });
-              },
-              child: Text('Finished'),
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: Colors.blue,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    activeActivities.remove(task);
+                    endedActivities.add(task);
+                  });
+                },
+                child: Text('Finished'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.blue,
+                ),
               ),
-            ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _showDelayDialog(context);
+                  });
+                },
+                child: Text('Delay'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: Color.fromARGB(255, 91, 91, 91),
+                ),
+              ),
+            ],
           ),
-        ),
+        )
       ],
     );
   }
 
-  String calculateCountdown(String? end) {
-    if (end == null) {
-      return '0h 0m';
-    }
-    DateTime endTime = DateTime.parse(end);
-    Duration remaining = endTime.difference(DateTime.now());
-    if (remaining.isNegative) {
-      return '0h 0m';
-    } else {
-      return "${remaining.inHours}h ${(remaining.inMinutes % 60).toString().padLeft(2, '0')}m";
-    }
+  void _showDelayDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Why do you want to delay?'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Reason',
+                    suffixIcon: Icon(Icons.search),
+                  ),
+                ),
+                ListTile(title: Text('Menu item')),
+                ListTile(title: Text('Menu item')),
+                ListTile(title: Text('Menu item')),
+                ListTile(title: Text('Menu item')),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Yes'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 
