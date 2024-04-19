@@ -51,9 +51,9 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     account = GoogleSignInManager.instance.currentUser;
     account ??= await GoogleSignInManager.instance.signIn();
     if (account != null) {
-      _fetchCalendars();
-      _fetchAndLogCalendars();
-      _fetchActivities();
+      await _fetchCalendars();
+      await _fetchAndLogCalendars(); // Wait for _fetchAndLogCalendars() to complete
+      _fetchActivities(); // Now call _fetchActivities() after _fetchAndLogCalendars() finishes
     } else {
       // Handle the scenario where sign-in failed or was declined
       debugPrint("Google sign-in failed or was declined by the user.");
@@ -557,7 +557,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     return "${duration.inHours}h ${duration.inMinutes % 60}m";
   }
 
-  void _fetchAndLogCalendars() async {
+  Future<void> _fetchAndLogCalendars() async {
     try {
       selectedCalendars = await FirebaseManager().fetchSelectedCalendars();
       // Now `selectedCalendars` is populated with the fetched data
