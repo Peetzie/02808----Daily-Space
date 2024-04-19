@@ -8,8 +8,9 @@ import 'package:dailyspace/screens/vis.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:intl/intl.dart';
-
+import 'package:dailyspace/activity_manager.dart';
 import 'package:dailyspace/custom_classes/helper.dart';
+import 'package:provider/provider.dart';
 
 class ActivityTracker extends StatefulWidget {
   const ActivityTracker({Key? key}) : super(key: key);
@@ -148,7 +149,8 @@ class _ActivityTrackerState extends State<ActivityTracker> {
           }
         });
       });
-
+      Provider.of<ActivityManager>(context, listen: false)
+          .setAvailableActivities(availableActivities);
       log("List of available activities fetched on reload: $availableActivities");
     } catch (e) {
       // Handle potential errors from the fetch call

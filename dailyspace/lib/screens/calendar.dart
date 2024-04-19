@@ -1,84 +1,64 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:dailyspace/custom_classes/taskinfo.dart';
+import 'package:intl/intl.dart';
 
-class Calendar extends StatefulWidget {
-  @override
-  _CalendarState createState() => _CalendarState();
-}
+class Calendar extends StatelessWidget {
+  final Map<String, TaskInfo>? availableActivities;
 
-class _CalendarState extends State<Calendar> {
-  DateTime selectedDate = DateTime.now();
-  bool isCalendarVisible = false;
-
-  void _showCalendarDialog() {
-    showCupertinoModalPopup(
-      context: context,
-      builder: (_) => Container(
-        height: 300,
-        color: Color.fromARGB(255, 255, 255, 255),
-        child: Column(
-          children: [
-            SizedBox(
-              height: 200,
-              child: CupertinoDatePicker(
-                mode: CupertinoDatePickerMode.dateAndTime,
-                initialDateTime: selectedDate,
-                onDateTimeChanged: (DateTime newDateTime) {
-                  setState(() {
-                    selectedDate = newDateTime;
-                  });
-                },
-                use24hFormat: true,
-                minuteInterval: 1,
-              ),
-            ),
-            CupertinoButton(
-              child: Text('OK'),
-              onPressed: () => Navigator.of(context).pop(),
-            )
-          ],
-        ),
-      ),
-    );
-  }
+  const Calendar({Key? key, this.availableActivities}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        body: SingleChildScrollView(
-          child: Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.all(10),
-                child: Row(
-                  children: [
-                    Text(
-                      '${selectedDate.day}-${selectedDate.month}-${selectedDate.year}',
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.indigo[700]),
-                    ),
-                    Spacer(),
-                    IconButton(
-                      icon: Icon(isCalendarVisible
-                          ? Icons.calendar_today
-                          : Icons.calendar_today_outlined),
-                      onPressed: () {
-                        setState(() {
-                          isCalendarVisible = !isCalendarVisible;
-                        });
-                        _showCalendarDialog();
-                      },
-                    )
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+    final Map<String, TaskInfo> activities =
+        ModalRoute.of(context)?.settings.arguments as Map<String, TaskInfo>? ??
+            availableActivities ??
+            {};
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Calendar Activities'),
+        backgroundColor: Colors.blue,
       ),
+      body: activities.isEmpty
+          ? Center(
+              child: Text('No activities available'),
+            )
+          : buildActivitiesList(activities),
     );
+  }
+
+  Widget buildActivitiesList(Map<String, TaskInfo> activities) {
+    return ListView.builder(
+      itemCount: activities.length,
+      itemBuilder: (context, index) {
+        TaskInfo task = activities.values.elementAt(index);
+        return Card(
+          child: ListTile(
+            title: Text(task.title),
+            subtitle: Text(
+                'Start: ${formatDateTime(task.start)} - End: ${formatDateTime(task.end)}\nDuration: ${calculateDuration(task.start, task.end)}'),
+            isThreeLine: true,
+          ),
+        );
+      },
+    );
+  }
+
+  String formatDateTime(String? dateTimeStr) {
+    if (dateTimeStr == null) {
+      return 'Unknown time';
+    }
+    DateTime dateTime = DateTime.parse(dateTimeStr);
+    return DateFormat('yyyy-MM-dd HH:mm').format(dateTime); // 格式化时间
+  }
+
+  String calculateDuration(String? start, String? end) {
+    if (start == null || end == null) {
+      return 'Duration Unknown';
+    }
+    DateTime startTime = DateTime.parse(start);
+    DateTime endTime = DateTime.parse(end);
+    Duration duration = endTime.difference(startTime);
+    return "${duration.inHours}h ${duration.inMinutes % 60}m";
   }
 }

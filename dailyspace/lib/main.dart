@@ -14,6 +14,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../google/google_sign_in_manager.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:provider/provider.dart';
+import 'package:dailyspace/activity_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -132,48 +134,48 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _widgetOptions = [
-    ActivityTracker(),
-    Calendar(),
-    OptionTwoPage(),
-    SettingsPage2(),
-  ];
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _widgetOptions,
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Tracker',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today),
-            label: 'Calendar',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.show_chart),
-            label: 'Visualize',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: const Color.fromARGB(255, 75, 73, 72),
-        onTap: _onItemTapped,
+    return ChangeNotifierProvider<ActivityManager>(
+      create: (_) => ActivityManager(),
+      child: Scaffold(
+        body: IndexedStack(
+          index: _selectedIndex,
+          children: <Widget>[
+            ActivityTracker(),
+            Consumer<ActivityManager>(
+              builder: (context, manager, child) =>
+                  Calendar(availableActivities: manager.availableActivities),
+            ),
+            OptionTwoPage(),
+            SettingsPage2(),
+          ],
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard),
+              label: 'Tracker',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_today),
+              label: 'Calendar',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.show_chart),
+              label: 'Visualize',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings),
+              label: 'Settings',
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: Colors.amber[800],
+          onTap: (index) {
+            setState(() => _selectedIndex = index);
+          },
+        ),
       ),
     );
   }
