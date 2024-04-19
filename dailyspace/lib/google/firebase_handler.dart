@@ -53,6 +53,41 @@ class FirebaseManager {
     }
   }
 
+  Future<Set<String>> fetchSelectedCalendars() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      // Reference to the user's calendars document
+      DocumentReference calendarsDoc = _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('settings')
+          .doc('calendars');
+
+      // Fetch the document
+      return calendarsDoc.get().then((docSnapshot) {
+        if (docSnapshot.exists && docSnapshot.data() != null) {
+          var data = docSnapshot.data()!
+              as Map<String, dynamic>; // Cast to Map<String, dynamic>
+          List<dynamic> calendars = data['selectedCalendars'];
+          // Log the fetched calendars
+          log("Fetched selected calendars: $calendars");
+          // Return the list as a Set of Strings
+          return Set<String>.from(
+              calendars.map((calendar) => calendar.toString()));
+        } else {
+          log("No selected calendars data found");
+          return Set<String>();
+        }
+      }).catchError((error) {
+        log("Failed to fetch selected calendars: $error");
+        return Set<String>(); // Return an empty set on error
+      });
+    } else {
+      log("User is not authenticated");
+      throw Exception('User is not authenticated');
+    }
+  }
+
   Future<void> addUser() async {
     User? user = _auth.currentUser;
     if (user != null) {
