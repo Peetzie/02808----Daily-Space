@@ -1,4 +1,5 @@
 import 'package:dailyspace/custom_classes/taskinfo.dart';
+import 'package:intl/intl.dart'; // Include to format DateTime
 
 class FirebaseEvent {
   final String taskId;
@@ -6,8 +7,8 @@ class FirebaseEvent {
   final String? startTime;
   final String? endTime;
   final String colorId;
-  final String? startedAt;
-  final String? endedAt;
+  final String? startedAt; // Changed to String? to store formatted DateTime
+  final String? endedAt; // Changed to String? to store formatted DateTime
   final String? duration;
 
   FirebaseEvent(this.taskId, this.taskTitle, this.startTime, this.endTime,
@@ -15,7 +16,7 @@ class FirebaseEvent {
 
   @override
   String toString() {
-    return 'FirebaseEvent(taskId: $taskId, title: $taskTitle, start: $startTime,end:$endTime, colorId: $colorId)';
+    return 'FirebaseEvent(taskId: $taskId, title: $taskTitle, start: $startTime, end: $endTime, colorId: $colorId)';
   }
 
   Map<String, dynamic> toMap() {
@@ -31,17 +32,35 @@ class FirebaseEvent {
     };
   }
 
+  static FirebaseEvent fromMap(Map<String, dynamic> map) {
+    return FirebaseEvent(
+      map['taskId'] as String,
+      map['taskTitle'] as String,
+      map['startTime'] as String?,
+      map['endTime'] as String?,
+      map['colorId'] as String,
+      map['startedAt'] as String?,
+      map['endedAt'] as String?,
+      map['duration'] as String?,
+    );
+  }
+
   static FirebaseEvent fromTaskInfo(
       TaskInfo task, DateTime? startedAt, DateTime? endedAt, String? duration) {
+    String? formatDateTime(DateTime? datetime) {
+      return datetime != null
+          ? DateFormat('yyyy-MM-dd HH:mm:ss').format(datetime)
+          : null;
+    }
+
     return FirebaseEvent(
         task.taskId,
         task.title,
-        task.start,
-        task.end,
+        task.start, // Ensure these are correctly formatted or null
+        task.end, // Ensure these are correctly formatted or null
         task.colorId,
-        startedAt as String?, // Or set as needed
-        endedAt as String?, // Or set as needed
-        duration // Or calculate as needed
-        );
+        formatDateTime(startedAt),
+        formatDateTime(endedAt),
+        duration);
   }
 }

@@ -25,9 +25,10 @@ final FirebaseManager firebaseManager = FirebaseManager();
 class _ActivityTrackerState extends State<ActivityTracker> {
   GoogleSignInAccount? account;
   late Map<String, TaskInfo> availableActivities;
-  late Set<TaskInfo> activeActivities;
+  late Set<FirebaseEvent> activeActivities;
   Timer? _timer;
   late List<TaskInfo> earlyStartActivities;
+  Set<String> selectedTaskIds = Set<String>();
 
   late List<String> availableCalendars;
   Set<String> selectedCalendars = {};
@@ -432,42 +433,55 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                         itemCount: earlyStartActivities.length,
                         itemBuilder: (context, index) {
                           final task = earlyStartActivities[index];
-                          return Container(
-                            height: MediaQuery.of(context).size.height *
-                                0.03, // Set fixed height for each task container
-                            margin: EdgeInsets.symmetric(
-                                vertical: 2.0, horizontal: 2.0),
-                            decoration: BoxDecoration(
-                              color: getColorFromId(task.colorId),
-                              borderRadius: BorderRadius.circular(2),
-                              border:
-                                  Border.all(color: Colors.black54, width: 1),
-                            ),
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 10), // Horizontal padding
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      task.title,
+                          bool isSelected =
+                              selectedTaskIds.contains(task.taskId);
+                          return InkWell(
+                            onTap: () {
+                              setState(() {
+                                if (isSelected) {
+                                  selectedTaskIds.remove(task.taskId);
+                                } else {
+                                  selectedTaskIds.add(task.taskId);
+                                }
+                              });
+                            },
+                            child: Container(
+                              height: MediaQuery.of(context).size.height * 0.03,
+                              margin: EdgeInsets.symmetric(
+                                  vertical: 2.0, horizontal: 2.0),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? Colors.blue[300]
+                                    : getColorFromId(task.colorId),
+                                borderRadius: BorderRadius.circular(2),
+                                border:
+                                    Border.all(color: Colors.black54, width: 1),
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 10),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        task.title,
+                                        style: TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: width * 0.04),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    Text(
+                                      calculateDuration(task.start, task.end),
                                       style: TextStyle(
                                           color: Colors.black,
-                                          fontWeight: FontWeight.bold,
                                           fontSize: width * 0.04),
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                  ),
-                                  Text(
-                                    calculateDuration(task.start, task.end),
-                                    style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: width * 0.04),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           );
@@ -482,12 +496,19 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                     onPressed: () {
                       setState(() {
                         earlyStartActivities.forEach((task) {
-                          firebaseManager.addFirebaseEvent(
-                              FirebaseEvent.fromTaskInfo(
-                                  task, null, null, null));
+                          if (selectedTaskIds.contains(task.taskId)) {
+                            DateTime now = DateTime.now();
+                            String formattedTimeStamp =
+                                DateFormat("yyyy-MM-dd HH:mm:ss").format(now);
+                            FirebaseEvent event = FirebaseEvent.fromTaskInfo(
+                                task, now, null, null);
+                            firebaseManager.addFirebaseEvent(event);
+                            activeActivities.add(event);
+                          }
                         });
-                        activeActivities.addAll(Set.from(earlyStartActivities));
-                        earlyStartActivities.clear();
+                        earlyStartActivities.removeWhere(
+                            (task) => selectedTaskIds.contains(task.taskId));
+                        selectedTaskIds.clear();
                       });
                     },
                     child: Text('Start Now!'),
@@ -503,6 +524,26 @@ class _ActivityTrackerState extends State<ActivityTracker> {
         );
       },
     );
+  }
+
+  void _endEvent(FirebaseEvent event) async {
+    try {
+      await firebaseManager.endEvent(event.taskId.toString());
+      _fetchActiveEvents();
+    } catch (e) {
+      debugPrint('Error ending event: ${e.toString()}');
+    }
+  }
+
+  void _fetchActiveEvents() async {
+    try {
+      var activeEvents = await firebaseManager.fetchActiveEvents();
+      setState(() {
+        activeEvents = activeEvents.toList();
+      });
+    } catch (e) {
+      debugPrint('Error fetching active events: ${e.toString()}');
+    }
   }
 
   Widget _buildWaitingToFinish() {
@@ -530,6 +571,21 @@ class _ActivityTrackerState extends State<ActivityTracker> {
             ),
           ),
           // Only display this task if activeActivities is empty
+          Expanded(
+              child: ListView.builder(
+            itemCount: activeActivities.length,
+            itemBuilder: (context, index) {
+              FirebaseEvent event = activeActivities.elementAt(index);
+              return ListTile(
+                title: Text(event.taskTitle),
+                subtitle: Text('Started at ${event.startedAt}'),
+                trailing: ElevatedButton(
+                  onPressed: () => _endEvent(event),
+                  child: Text('Finish'),
+                ),
+              );
+            },
+          )),
           if (activeActivities.isEmpty) ...[
             SizedBox(height: containerWidth * 0.05),
             Container(

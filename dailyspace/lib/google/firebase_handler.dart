@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dailyspace/custom_classes/helper.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dailyspace/custom_classes/firebase_event.dart';
 
@@ -21,6 +22,27 @@ class FirebaseManager {
           .catchError((error) => log("Failed to add event: $error"));
     } else {
       log("User is not authenticated");
+    }
+  }
+
+  Future<List<FirebaseEvent>> fetchActiveEvents() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      var snapshot = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('events')
+          .where('endedAt', isNull: true)
+          .get();
+      List<FirebaseEvent> activeEvents = snapshot.docs
+          .map((doc) =>
+              FirebaseEvent.fromMap(doc.data() as Map<String, dynamic>))
+          .toList();
+      log("Fetched active events");
+      return activeEvents;
+    } else {
+      log("User is not authenticated");
+      throw Exception("User is not authenticated");
     }
   }
 
@@ -81,6 +103,31 @@ class FirebaseManager {
       }).catchError((error) {
         log("Failed to fetch selected calendars: $error");
         return Set<String>(); // Return an empty set on error
+      });
+    } else {
+      log("User is not authenticated");
+      throw Exception('User is not authenticated');
+    }
+  }
+
+  Future<void> endEvent(String taskId) async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      DocumentReference eventDoc = _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('events')
+          .doc(taskId);
+
+      return eventDoc.update({
+        'endedAt': FieldValue.serverTimestamp(), // Set the actual end timestamp
+        'endTime':
+            getCurrentTimestamp(), // Update the end time to the provided value
+      }).then((value) {
+        log("Event ended successfully for Task ID: $taskId");
+      }).catchError((error) {
+        log("Failed to end event: $error");
+        throw Exception("Failed to end event: $error");
       });
     } else {
       log("User is not authenticated");

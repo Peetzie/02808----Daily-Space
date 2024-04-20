@@ -20,7 +20,12 @@ class TimeFormatter {
     return "";
   }
 }
+
 // Dart Color Definitions for Flutter
+String getCurrentTimestamp() {
+  DateTime now = DateTime.now();
+  return DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
+}
 
 class Palette {
   static const Color lavender = Color(0xFFac725e);
