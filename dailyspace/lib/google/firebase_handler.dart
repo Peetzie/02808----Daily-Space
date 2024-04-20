@@ -25,21 +25,32 @@ class FirebaseManager {
     }
   }
 
-  Future<List<FirebaseEvent>> fetchActiveEvents() async {
+  Future<Map<String, FirebaseEvent>> fetchActiveEvents() async {
     User? user = _auth.currentUser;
     if (user != null) {
-      var snapshot = await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('events')
-          .where('endedAt', isNull: true)
-          .get();
-      List<FirebaseEvent> activeEvents = snapshot.docs
-          .map((doc) =>
-              FirebaseEvent.fromMap(doc.data() as Map<String, dynamic>))
-          .toList();
-      log("Fetched active events");
-      return activeEvents;
+      try {
+        var snapshot = await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('events')
+            .where('endedAt', isNull: true)
+            .get();
+
+        // Convert the list of DocumentSnapshots to a Map
+        Map<String, FirebaseEvent> activeEventsMap = {};
+        for (var doc in snapshot.docs) {
+          FirebaseEvent event =
+              FirebaseEvent.fromMap(doc.data() as Map<String, dynamic>);
+          activeEventsMap[event.taskId] =
+              event; // Assume taskId is a unique key for each event
+        }
+
+        log("Fetched active events");
+        return activeEventsMap;
+      } catch (e) {
+        log("Error fetching active events: ${e.toString()}");
+        return {}; // Return an empty map in case of error
+      }
     } else {
       log("User is not authenticated");
       throw Exception("User is not authenticated");

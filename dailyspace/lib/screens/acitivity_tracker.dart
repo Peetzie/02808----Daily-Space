@@ -27,7 +27,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
   late Map<String, TaskInfo> availableActivities;
   late Set<FirebaseEvent> activeActivities;
   Timer? _timer;
-  late List<TaskInfo> earlyStartActivities;
+  late Set<TaskInfo> earlyStartActivities;
   Set<String> selectedTaskIds = Set<String>();
 
   late List<String> availableCalendars;
@@ -39,7 +39,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     availableActivities = {};
     activeActivities = {};
     availableCalendars = [];
-    earlyStartActivities = [];
+    earlyStartActivities = {};
     _initAccountAndFetchData();
 
     // Update datetime every second
@@ -80,8 +80,12 @@ class _ActivityTrackerState extends State<ActivityTracker> {
 
   Future<void> _fetchActivities() async {
     try {
+      // Fetch active tasks from Firebase
+      Map<String, FirebaseEvent> firebaseTasks =
+          await firebaseManager.fetchActiveEvents();
+
       availableActivities.clear();
-      earlyStartActivities.clear(); // Clear the earlyStartActivities list
+      earlyStartActivities.clear();
 
       final tasks = await GoogleServices.fetchTasksFromCalendar(
           account, selectedCalendars);
@@ -89,59 +93,53 @@ class _ActivityTrackerState extends State<ActivityTracker> {
 
       setState(() {
         tasks.values.forEach((task) {
-          try {
-            DateTime taskStart;
-            if (task['start'].contains("T")) {
-              // If the date format is 2024-04-11T11:05:48.576Z
-              taskStart = DateTime.parse(task['start']);
-              final difference = taskStart.difference(now).inMinutes;
+          TaskInfo newTask = TaskInfo(task['taskId'], task['title'],
+              task['start'], task['end'], task['colorId']);
 
-              if (DateFormat('yyyy-MM-dd').format(taskStart) ==
-                  DateFormat('yyyy-MM-dd').format(now)) {
-                if (difference.abs() <= 30) {
-                  // Add to earlyStartActivities if within 30 minutes
-                  earlyStartActivities.add(TaskInfo(
-                      task['taskId'],
-                      task['title'],
-                      task['start'],
-                      task['end'],
-                      task['colorId']));
-                } else {
-                  availableActivities[task['taskId']] =
-                      availableActivities[task['taskId']] = TaskInfo(
-                          task['taskId'],
-                          task['title'],
-                          task['start'],
-                          task['end'],
-                          task['colorId']);
-                }
-              } else {
-                // Add to availableActivities if not today
-                availableActivities[task['taskId']] = TaskInfo(task['taskId'],
-                    task['title'], task['start'], task['end'], task['colorId']);
-              }
+          DateTime taskStart;
+          int difference;
+
+          // Check if the task is already active, skip if it is
+          if (!firebaseTasks.containsKey(task['taskId'])) {
+            if (task['start'].contains("T")) {
+              // Time-specific task start
+              taskStart = DateTime.parse(task['start']);
+              difference = taskStart.difference(now).inMinutes;
             } else {
-              // If the date format is 24-04-11
-              taskStart = DateFormat('yy-MM-dd').parse(task['start']);
+              // Full-day or date-only event
+              try {
+                taskStart = DateFormat('yyyy-MM-dd').parse(task['start']);
+                difference = now.difference(taskStart).inMinutes;
+              } catch (e) {
+                log("Error parsing date-only start: ${e.toString()}");
+                return; // Skip this iteration on parse error
+              }
+
+              // Special handling for full-day tasks that start today
               if (DateFormat('yyyy-MM-dd').format(taskStart) ==
                   DateFormat('yyyy-MM-dd').format(now)) {
-                earlyStartActivities.add(TaskInfo(task['taskId'], task['title'],
-                    task['start'], task['end'], task['colorId']));
-              } else {
-                availableActivities[task['taskId']] = TaskInfo(task['taskId'],
-                    task['title'], task['start'], task['end'], task['colorId']);
+                earlyStartActivities.add(newTask);
+                return; // Add to start today and skip further checks
               }
             }
-          } catch (e) {
-            // Handle the error if the task['start'] is not in a valid DateTime format
-            log("Error parsing date: ${e.toString()}");
+
+            // Regular checks for tasks with specific times
+            if (DateFormat('yyyy-MM-dd').format(taskStart) ==
+                DateFormat('yyyy-MM-dd').format(now)) {
+              if (difference.abs() <= 30) {
+                earlyStartActivities.add(newTask);
+              } else {
+                availableActivities[task['taskId']] = newTask;
+              }
+            } else {
+              availableActivities[task['taskId']] = newTask;
+            }
           }
         });
       });
 
-      log("List of available activities fetched on reload: $availableActivities");
+      log("Updated lists of activities based on current statuses.");
     } catch (e) {
-      // Handle potential errors from the fetch call
       log("Error fetching tasks: ${e.toString()}");
     }
   }
@@ -432,7 +430,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                     : ListView.builder(
                         itemCount: earlyStartActivities.length,
                         itemBuilder: (context, index) {
-                          final task = earlyStartActivities[index];
+                          final task = earlyStartActivities.elementAt(index);
                           bool isSelected =
                               selectedTaskIds.contains(task.taskId);
                           return InkWell(
@@ -539,7 +537,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     try {
       var activeEvents = await firebaseManager.fetchActiveEvents();
       setState(() {
-        activeEvents = activeEvents.toList();
+        activeEvents = activeEvents;
       });
     } catch (e) {
       debugPrint('Error fetching active events: ${e.toString()}');
