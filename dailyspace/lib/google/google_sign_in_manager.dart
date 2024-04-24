@@ -16,4 +16,20 @@ class GoogleSignInManager {
       'https://www.googleapis.com/auth/tasks'
     ],
   );
+
+  Future<void> signOut() async {
+    await googleSignIn.signOut();
+    googleSignIn.disconnect(); // Ensures the user session is fully cleared.
+  }
+
+  Future<GoogleSignInAccount?> signIn() async {
+    try {
+      return await googleSignIn.signIn();
+    } catch (e) {
+      // Handle errors here if needed
+      return null;
+    }
+  }
+
+  GoogleSignInAccount? get currentUser => googleSignIn.currentUser;
 }

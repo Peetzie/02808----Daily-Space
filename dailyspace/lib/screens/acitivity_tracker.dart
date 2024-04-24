@@ -20,10 +20,10 @@ class ActivityTracker extends StatefulWidget {
   _ActivityTrackerState createState() => _ActivityTrackerState();
 }
 
-final GoogleSignInAccount? account =
-    GoogleSignInManager.instance.googleSignIn.currentUser;
+final FirebaseManager firebaseManager = FirebaseManager();
 
 class _ActivityTrackerState extends State<ActivityTracker> {
+  GoogleSignInAccount? account;
   late Map<String, TaskInfo> availableActivities;
   late Set<TaskInfo> activeActivities;
   Timer? _timer;
@@ -39,13 +39,25 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     activeActivities = {};
     availableCalendars = [];
     earlyStartActivities = [];
-    _fetchCalendars();
-    _fetchActivities();
+    _initAccountAndFetchData();
 
     // Update datetime every second
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       setState(() {});
     });
+  }
+
+  void _initAccountAndFetchData() async {
+    account = GoogleSignInManager.instance.currentUser;
+    account ??= await GoogleSignInManager.instance.signIn();
+    if (account != null) {
+      await _fetchCalendars();
+      await _fetchAndLogCalendars(); // Wait for _fetchAndLogCalendars() to complete
+      _fetchActivities(); // Now call _fetchActivities() after _fetchAndLogCalendars() finishes
+    } else {
+      // Handle the scenario where sign-in failed or was declined
+      debugPrint("Google sign-in failed or was declined by the user.");
+    }
   }
 
   @override
@@ -222,7 +234,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
         ),
         IconButton(
           onPressed: () async {
-            await GoogleSignInManager.instance.googleSignIn.signOut();
+            await GoogleSignInManager.instance.signOut();
             // Navigate back to login screen
             Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (context) => const LoginScreen()));
@@ -470,7 +482,9 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                     onPressed: () {
                       setState(() {
                         earlyStartActivities.forEach((task) {
-                          addFirebaseEvent(FirebaseEvent.fromTaskInfo(task));
+                          firebaseManager.addFirebaseEvent(
+                              FirebaseEvent.fromTaskInfo(
+                                  task, null, null, null));
                         });
                         activeActivities.addAll(Set.from(earlyStartActivities));
                         earlyStartActivities.clear();
@@ -541,6 +555,16 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     DateTime endTime = DateTime.parse(end);
     Duration duration = endTime.difference(startTime);
     return "${duration.inHours}h ${duration.inMinutes % 60}m";
+  }
+
+  Future<void> _fetchAndLogCalendars() async {
+    try {
+      selectedCalendars = await FirebaseManager().fetchSelectedCalendars();
+      // Now `selectedCalendars` is populated with the fetched data
+      log("Selected calendars on page load: ${selectedCalendars.toString()}");
+    } catch (e) {
+      log("Error fetching calendars: $e");
+    }
   }
 }
 
@@ -613,8 +637,9 @@ class _CalendarOverlayDialogState extends State<CalendarOverlayDialog> {
       ),
       actions: <Widget>[
         TextButton(
-          onPressed: () {
+          onPressed: () async {
             _newSelectedCalendars = widget.selectedCalendars;
+            await firebaseManager.saveSelectedCalendars(_newSelectedCalendars!);
             Navigator.of(context).pop(_newSelectedCalendars);
           },
           child: Text('OK'),
@@ -639,6 +664,7 @@ class _CalendarOverlayDialogState extends State<CalendarOverlayDialog> {
   }
 
   Future<void> _fetchCalendars() async {
+    GoogleSignInAccount? account = GoogleSignInManager.instance.currentUser;
     try {
       // Fetch new calendars
       final calendars = await GoogleServices.fetchCalendars(account);
@@ -816,6 +842,7 @@ class _AddCalendarOverlayState extends State<AddCalendarOverlay> {
   }
 
   Future<void> createCalendars() async {
+    GoogleSignInAccount? account = GoogleSignInManager.instance.currentUser;
     setState(() => _isLoading = true);
     _progress = 0.0; // Initialize progress
 
