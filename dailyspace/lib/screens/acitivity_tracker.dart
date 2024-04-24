@@ -85,6 +85,8 @@ class _ActivityTrackerState extends State<ActivityTracker> {
       // Fetch active tasks from Firebase
       Map<String, FirebaseEvent> firebaseTasks =
           await firebaseManager.fetchActiveEvents();
+      Set<String> endedFirebaseTasksIds =
+          await firebaseManager.fetchAllEndedEventIds();
       final tasks = await GoogleServices.fetchTasksFromCalendar(
           account, selectedCalendars);
       log(tasks.toString());
@@ -99,7 +101,8 @@ class _ActivityTrackerState extends State<ActivityTracker> {
           int difference;
 
           // Check if the task is already active, skip if it is
-          if (!firebaseTasks.containsKey(task['taskId'])) {
+          if (!firebaseTasks.containsKey(task['taskId']) &&
+              !endedFirebaseTasksIds.contains(task['taskId'])) {
             if (task['start'].contains("T")) {
               // Time-specific task start
               taskStart = DateTime.parse(task['start']);

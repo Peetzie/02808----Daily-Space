@@ -16,7 +16,7 @@ class FirebaseManager {
       _firestore
           .collection('users')
           .doc(user.uid)
-          .collection('events')
+          .collection('activeEvents')
           .doc(event.taskId) // Specify the document ID explicitly here
           .set(event.toMap())
           .then((value) =>
@@ -34,7 +34,7 @@ class FirebaseManager {
         var snapshot = await _firestore
             .collection('users')
             .doc(user.uid)
-            .collection('events')
+            .collection('activeEvents')
             .where('endedAt', isNull: true)
             .get();
 
@@ -61,58 +61,40 @@ class FirebaseManager {
   Future<void> endEvent(String taskId) async {
     User? user = _auth.currentUser;
     if (user != null) {
-      DocumentReference eventDoc = _firestore
+      DocumentReference activeEventDoc = _firestore
           .collection('users')
           .doc(user.uid)
-          .collection('events')
+          .collection('activeEvents')
           .doc(taskId);
 
-      return eventDoc.update({
-        'endedAt': FieldValue.serverTimestamp(), // Set the actual end timestamp
-        'endTime': TimeFormatter
-            .getCurrentTimestamp(), // Update the end time to the provided value
-      }).then((value) {
-        log("Event ended successfully for Task ID: $taskId");
-      }).catchError((error) {
-        log("Failed to end event: $error");
-        throw Exception("Failed to end event: $error");
-      });
+      // Fetch the event to be ended
+      DocumentSnapshot eventSnapshot = await activeEventDoc.get();
+      if (eventSnapshot.exists) {
+        Map<String, dynamic> eventData =
+            eventSnapshot.data() as Map<String, dynamic>;
+        eventData['endedAt'] = FieldValue.serverTimestamp();
+
+        // Copy the ended event to the 'endedEvents' collection
+        await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('endedEvents')
+            .doc(taskId)
+            .set(eventData);
+
+        // Remove the event from 'activeEvents'
+        await activeEventDoc.delete();
+        log("Event moved to ended successfully for Task ID: $taskId");
+      } else {
+        log("Event not found or already ended.");
+      }
     } else {
       log("User is not authenticated");
       throw Exception('User is not authenticated');
     }
   }
 
-  Future<Set<FirebaseEvent>> fetchEventsTEst() async {
-    User? user = _auth.currentUser;
-    if (user != null) {
-      try {
-        var snapshot = await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .collection('events')
-            .get();
-
-        // Convert the list of DocumentSnapshots to a Map
-        Set<FirebaseEvent> allEvents = {};
-        for (var doc in snapshot.docs) {
-          FirebaseEvent event =
-              FirebaseEvent.fromMap(doc.data() as Map<String, dynamic>);
-          allEvents.add(event);
-        }
-
-        return allEvents;
-      } catch (e) {
-        log("Error fetching active events: ${e.toString()}");
-        return {}; // Return an empty map in case of error
-      }
-    } else {
-      log("User is not authenticated");
-      throw Exception("User is not authenticated");
-    }
-  }
-
-  Future<List<FirebaseEvent>> fetchAndConvertEvents() async {
+  Future<List<FirebaseEvent>> fetchAndConvertEndedEvents() async {
     User? user = _auth.currentUser;
     if (user == null) {
       log("User is not authenticated");
@@ -123,13 +105,37 @@ class FirebaseManager {
     QuerySnapshot eventsSnapshot = await _firestore
         .collection('users')
         .doc(user.uid)
-        .collection('events')
+        .collection('endedEvents')
         .get();
     for (DocumentSnapshot eventDoc in eventsSnapshot.docs) {
       eventList
           .add(FirebaseEvent.fromMap(eventDoc.data() as Map<String, dynamic>));
     }
     return eventList;
+  }
+
+  Future<Set<String>> fetchAllEndedEventIds() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      try {
+        var snapshot = await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('endedEvents')
+            .get();
+        Set<String> eventIds = Set<String>();
+        for (var doc in snapshot.docs) {
+          eventIds.add(doc.id);
+        }
+        return eventIds;
+      } catch (e) {
+        log("Error fetching ended evnet IDs: ${e.toString()}");
+        return Set<String>();
+      }
+    } else {
+      log("User is not authenticated");
+      throw Exception("User is not authenticated");
+    }
   }
 
   Future<void> saveSelectedCalendars(Set<String> selectedCalendars) async {

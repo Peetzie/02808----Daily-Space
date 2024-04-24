@@ -4,7 +4,7 @@ import 'package:dailyspace/resources/app_colors.dart'; // Ensure this file conta
 
 class DelayBarChart extends StatelessWidget {
   final Map<String, double> averageDelays;
-
+  final int overflowChars = 13;
   DelayBarChart(this.averageDelays);
 
   @override
@@ -48,11 +48,18 @@ class DelayBarChart extends StatelessWidget {
                 reservedSize: 42,
                 getTitlesWidget: (double value, TitleMeta meta) {
                   final index = value.toInt();
+                  String title = averageDelays.keys.elementAt(index);
                   return SideTitleWidget(
-                    axisSide: meta.axisSide,
-                    space: 16.0,
-                    child: Text(averageDelays.keys.elementAt(index)),
-                  );
+                      axisSide: meta.axisSide,
+                      space: 16.0,
+                      child: Text(
+                        title.length > overflowChars
+                            ? title.substring(0, overflowChars) + '...'
+                            : title,
+                        overflow: title.length > overflowChars
+                            ? TextOverflow.ellipsis
+                            : TextOverflow.visible,
+                      ));
                 },
               ),
             ),
@@ -69,8 +76,8 @@ class DelayBarChart extends StatelessWidget {
               barRods: [
                 BarChartRodData(
                   toY: averageDelays[key] ?? 0,
-                  color: Color.fromARGB(255, 23, 173,
-                      193), // Ensure you define this color in AppColors
+                  color: Color.fromARGB(177, 68, 223,
+                      40), // Ensure you define this color in AppColors
                   width: 22,
                 ),
               ],

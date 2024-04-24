@@ -28,7 +28,7 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
 
   Future<void> fetchEvents() async {
     try {
-      var fetchedEvents = await firebaseManager.fetchAndConvertEvents();
+      var fetchedEvents = await firebaseManager.fetchAndConvertEndedEvents();
       setState(() {
         events = fetchedEvents;
         calculateAverageDelays();
