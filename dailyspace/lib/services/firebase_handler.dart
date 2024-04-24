@@ -1,9 +1,9 @@
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:dailyspace/custom_classes/helper.dart';
-import 'package:dailyspace/custom_classes/taskinfo.dart';
+import 'package:dailyspace/datastructures/Timeformatter.dart';
+import 'package:dailyspace/datastructures/taskinfo.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:dailyspace/custom_classes/firebase_event.dart';
+import 'package:dailyspace/datastructures/firebase_event.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 class FirebaseManager {

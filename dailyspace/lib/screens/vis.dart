@@ -1,13 +1,13 @@
 import 'dart:math';
 
-import 'package:dailyspace/custom_classes/helper.dart';
-import 'package:dailyspace/resources/app_colors.dart';
-import 'package:dailyspace/widgets/delay_bar_chart.dart';
-import 'package:dailyspace/widgets/task_completion.dart';
+import 'package:dailyspace/datastructures/Timeformatter.dart';
+import 'package:dailyspace/sources/app_colors.dart';
+import 'package:dailyspace/widgets/graphs/delay_bar_chart.dart';
+import 'package:dailyspace/widgets/graphs/task_completion.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:dailyspace/custom_classes/firebase_event.dart';
-import 'package:dailyspace/google/firebase_handler.dart';
+import 'package:dailyspace/datastructures/firebase_event.dart';
+import 'package:dailyspace/services/firebase_handler.dart';
 import 'package:tuple/tuple.dart';
 
 class OptionTwoPage extends StatefulWidget {
