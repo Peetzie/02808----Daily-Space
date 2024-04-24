@@ -31,6 +31,8 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
 
   Future<void> fetchEvents() async {
     try {
+      endedEvents.clear();
+      allEvents.clear();
       var fetchedEvents = await firebaseManager.fetchAndConvertEndedEvents();
       var allFetchedEvents = await firebaseManager.fetchActiveAndEndedEvents();
       setState(() {
