@@ -19,6 +19,16 @@ class TimeFormatter {
     }
     return "";
   }
+
+  static String? calculateDuration(DateTime? startedAt, DateTime? endedAt) {
+    if (startedAt == null || endedAt == null) return null;
+    return endedAt.difference(startedAt).toString();
+  }
+
+  static String getCurrentTimestamp() {
+    DateTime now = DateTime.now();
+    return DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
+  }
 }
 // Dart Color Definitions for Flutter
 

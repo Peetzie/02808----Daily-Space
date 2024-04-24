@@ -1,4 +1,5 @@
 import 'package:dailyspace/custom_classes/taskinfo.dart';
+import 'package:intl/intl.dart';
 
 class FirebaseEvent {
   final String taskId;
@@ -33,15 +34,33 @@ class FirebaseEvent {
 
   static FirebaseEvent fromTaskInfo(
       TaskInfo task, DateTime? startedAt, DateTime? endedAt, String? duration) {
+    String? formatDateTime(DateTime? datetime) {
+      return datetime != null
+          ? DateFormat('yyyy-MM-dd HH:mm:ss').format(datetime)
+          : null;
+    }
+
     return FirebaseEvent(
         task.taskId,
         task.title,
-        task.start,
-        task.end,
+        task.start, // Ensure these are correctly formatted or null
+        task.end, // Ensure these are correctly formatted or null
         task.colorId,
-        startedAt as String?, // Or set as needed
-        endedAt as String?, // Or set as needed
-        duration // Or calculate as needed
-        );
+        formatDateTime(startedAt),
+        formatDateTime(endedAt),
+        duration);
+  }
+
+  static FirebaseEvent fromMap(Map<String, dynamic> map) {
+    return FirebaseEvent(
+      map['taskId'] as String,
+      map['taskTitle'] as String,
+      map['startTime'] as String?,
+      map['endTime'] as String?,
+      map['colorId'] as String,
+      map['startedAt'] as String?,
+      map['endedAt'] as String?,
+      map['duration'] as String?,
+    );
   }
 }

@@ -25,9 +25,10 @@ final FirebaseManager firebaseManager = FirebaseManager();
 class _ActivityTrackerState extends State<ActivityTracker> {
   GoogleSignInAccount? account;
   late Map<String, TaskInfo> availableActivities;
-  late Set<TaskInfo> activeActivities;
+  late Set<FirebaseEvent> activeActivities;
   Timer? _timer;
-  late List<TaskInfo> earlyStartActivities;
+  late Set<TaskInfo> earlyStartActivities;
+  Set<String> selectedTaskIds = Set<String>();
 
   late List<String> availableCalendars;
   Set<String> selectedCalendars = {};
@@ -38,7 +39,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     availableActivities = {};
     activeActivities = {};
     availableCalendars = [];
-    earlyStartActivities = [];
+    earlyStartActivities = {};
     _initAccountAndFetchData();
 
     // Update datetime every second
@@ -79,8 +80,12 @@ class _ActivityTrackerState extends State<ActivityTracker> {
 
   Future<void> _fetchActivities() async {
     try {
+      // Fetch active tasks from Firebase
+      Map<String, FirebaseEvent> firebaseTasks =
+          await firebaseManager.fetchActiveEvents();
+
       availableActivities.clear();
-      earlyStartActivities.clear(); // Clear the earlyStartActivities list
+      earlyStartActivities.clear();
 
       final tasks = await GoogleServices.fetchTasksFromCalendar(
           account, selectedCalendars);
@@ -88,58 +93,53 @@ class _ActivityTrackerState extends State<ActivityTracker> {
 
       setState(() {
         tasks.values.forEach((task) {
-          try {
-            DateTime taskStart;
-            if (task['start'].contains("T")) {
-              // If the date format is 2024-04-11T11:05:48.576Z
-              taskStart = DateTime.parse(task['start']);
-              final difference = taskStart.difference(now).inMinutes;
+          TaskInfo newTask = TaskInfo(task['taskId'], task['title'],
+              task['start'], task['end'], task['colorId']);
 
-              if (DateFormat('yyyy-MM-dd').format(taskStart) ==
-                  DateFormat('yyyy-MM-dd').format(now)) {
-                if (difference.abs() <= 30) {
-                  // Add to earlyStartActivities if within 30 minutes
-                  earlyStartActivities.add(TaskInfo(
-                      task['taskId'],
-                      task['title'],
-                      task['start'],
-                      task['end'],
-                      task['colorId']));
-                } else {
-                  availableActivities[task['taskId']] =
-                      availableActivities[task['taskId']] = TaskInfo(
-                          task['taskId'],
-                          task['title'],
-                          task['start'],
-                          task['end'],
-                          task['colorId']);
-                }
-              } else {
-                // Add to availableActivities if not today
-                availableActivities[task['taskId']] = TaskInfo(task['taskId'],
-                    task['title'], task['start'], task['end'], task['colorId']);
-              }
+          DateTime taskStart;
+          int difference;
+
+          // Check if the task is already active, skip if it is
+          if (!firebaseTasks.containsKey(task['taskId'])) {
+            if (task['start'].contains("T")) {
+              // Time-specific task start
+              taskStart = DateTime.parse(task['start']);
+              difference = taskStart.difference(now).inMinutes;
             } else {
-              // If the date format is 24-04-11
-              taskStart = DateFormat('yy-MM-dd').parse(task['start']);
+              // Full-day or date-only event
+              try {
+                taskStart = DateFormat('yyyy-MM-dd').parse(task['start']);
+                difference = now.difference(taskStart).inMinutes;
+              } catch (e) {
+                log("Error parsing date-only start: ${e.toString()}");
+                return; // Skip this iteration on parse error
+              }
+
+              // Special handling for full-day tasks that start today
               if (DateFormat('yyyy-MM-dd').format(taskStart) ==
                   DateFormat('yyyy-MM-dd').format(now)) {
-                earlyStartActivities.add(TaskInfo(task['taskId'], task['title'],
-                    task['start'], task['end'], task['colorId']));
-              } else {
-                availableActivities[task['taskId']] = TaskInfo(task['taskId'],
-                    task['title'], task['start'], task['end'], task['colorId']);
+                earlyStartActivities.add(newTask);
+                return; // Add to start today and skip further checks
               }
             }
-          } catch (e) {
-            // Handle the error if the task['start'] is not in a valid DateTime format
-            log("Error parsing date: ${e.toString()}");
+
+            // Regular checks for tasks with specific times
+            if (DateFormat('yyyy-MM-dd').format(taskStart) ==
+                DateFormat('yyyy-MM-dd').format(now)) {
+              if (difference.abs() <= 30) {
+                earlyStartActivities.add(newTask);
+              } else {
+                availableActivities[task['taskId']] = newTask;
+              }
+            } else {
+              availableActivities[task['taskId']] = newTask;
+            }
           }
         });
       });
-      log("List of available activities fetched on reload: $availableActivities");
+
+      log("Updated lists of activities based on current statuses.");
     } catch (e) {
-      // Handle potential errors from the fetch call
       log("Error fetching tasks: ${e.toString()}");
     }
   }
@@ -430,43 +430,56 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                     : ListView.builder(
                         itemCount: earlyStartActivities.length,
                         itemBuilder: (context, index) {
-                          final task = earlyStartActivities[index];
-                          return Container(
-                            height: MediaQuery.of(context).size.height *
-                                0.03, // Set fixed height for each task container
-                            margin: EdgeInsets.symmetric(
-                                vertical: 2.0, horizontal: 2.0),
-                            decoration: BoxDecoration(
-                              color: getColorFromId(task.colorId),
-                              borderRadius: BorderRadius.circular(2),
-                              border:
-                                  Border.all(color: Colors.black54, width: 1),
-                            ),
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 10), // Horizontal padding
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      task.title,
+                          final task = earlyStartActivities.elementAt(index);
+                          bool isSelected =
+                              selectedTaskIds.contains(task.taskId);
+                          return InkWell(
+                            onTap: () {
+                              setState(() {
+                                if (isSelected) {
+                                  selectedTaskIds.remove(task.taskId);
+                                } else {
+                                  selectedTaskIds.add(task.taskId);
+                                }
+                              });
+                            },
+                            child: Container(
+                              height: MediaQuery.of(context).size.height * 0.03,
+                              margin: EdgeInsets.symmetric(
+                                  vertical: 2.0, horizontal: 2.0),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? Colors.blue[300]
+                                    : getColorFromId(task.colorId),
+                                borderRadius: BorderRadius.circular(2),
+                                border:
+                                    Border.all(color: Colors.black54, width: 1),
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 10),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        task.title,
+                                        style: TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: width * 0.04),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    Text(
+                                      calculateDuration(task.start, task.end),
                                       style: TextStyle(
                                           color: Colors.black,
-                                          fontWeight: FontWeight.bold,
                                           fontSize: width * 0.04),
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                  ),
-                                  Text(
-                                    calculateDuration(task.start, task.end),
-                                    style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: width * 0.04),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           );
@@ -481,12 +494,19 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                     onPressed: () {
                       setState(() {
                         earlyStartActivities.forEach((task) {
-                          firebaseManager.addFirebaseEvent(
-                              FirebaseEvent.fromTaskInfo(
-                                  task, null, null, null));
+                          if (selectedTaskIds.contains(task.taskId)) {
+                            DateTime now = DateTime.now();
+                            String formattedTimeStamp =
+                                DateFormat("yyyy-MM-dd HH:mm:ss").format(now);
+                            FirebaseEvent event = FirebaseEvent.fromTaskInfo(
+                                task, now, null, null);
+                            firebaseManager.addFirebaseEvent(event);
+                            activeActivities.add(event);
+                          }
                         });
-                        activeActivities.addAll(Set.from(earlyStartActivities));
-                        earlyStartActivities.clear();
+                        earlyStartActivities.removeWhere(
+                            (task) => selectedTaskIds.contains(task.taskId));
+                        selectedTaskIds.clear();
                       });
                     },
                     child: Text('Start Now!'),
@@ -502,6 +522,26 @@ class _ActivityTrackerState extends State<ActivityTracker> {
         );
       },
     );
+  }
+
+  void _endEvent(FirebaseEvent event) async {
+    try {
+      await firebaseManager.endEvent(event.taskId.toString());
+      _fetchActiveEvents();
+    } catch (e) {
+      debugPrint('Error ending event: ${e.toString()}');
+    }
+  }
+
+  void _fetchActiveEvents() async {
+    try {
+      var activeEvents = await firebaseManager.fetchActiveEvents();
+      setState(() {
+        activeEvents = activeEvents;
+      });
+    } catch (e) {
+      debugPrint('Error fetching active events: ${e.toString()}');
+    }
   }
 
   Widget _buildWaitingToFinish() {
@@ -529,6 +569,21 @@ class _ActivityTrackerState extends State<ActivityTracker> {
             ),
           ),
           // Only display this task if activeActivities is empty
+          Expanded(
+              child: ListView.builder(
+            itemCount: activeActivities.length,
+            itemBuilder: (context, index) {
+              FirebaseEvent event = activeActivities.elementAt(index);
+              return ListTile(
+                title: Text(event.taskTitle),
+                subtitle: Text('Started at ${event.startedAt}'),
+                trailing: ElevatedButton(
+                  onPressed: () => _endEvent(event),
+                  child: Text('Finish'),
+                ),
+              );
+            },
+          )),
           if (activeActivities.isEmpty) ...[
             SizedBox(height: containerWidth * 0.05),
             Container(

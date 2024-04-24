@@ -1,108 +1,65 @@
-import 'package:dailyspace/screens/acitivity_tracker.dart';
-import 'package:flutter/material.dart';
+import 'dart:developer'; // Import Dart's developer tools for logging
+import 'dart:math';
 
-class OptionTwoPage extends StatelessWidget {
+import 'package:dailyspace/custom_classes/firebase_event.dart';
+import 'package:dailyspace/google/firebase_handler.dart';
+import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
+
+class OptionTwoPage extends StatefulWidget {
   const OptionTwoPage({super.key});
+
+  @override
+  _OptionTwoPageState createState() => _OptionTwoPageState();
+}
+
+class _OptionTwoPageState extends State<OptionTwoPage> {
+  final FirebaseManager firebaseManager = FirebaseManager();
+  List<FirebaseEvent> events = [];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.lightBlueAccent, Colors.lightGreenAccent],
+      appBar: AppBar(title: const Text("Event Visualization")),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text("Hello"),
           ),
-        ),
-        child: Column(
-          children: [
-            AppBar(
-              title: const Text(
-                "Main Activity window",
-                style: TextStyle(color: Colors.white),
-              ),
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: Builder(
-                builder: (BuildContext context) {
-                  return IconButton(
-                    icon: const Icon(Icons.menu, color: Colors.white),
-                    onPressed: () {
-                      Scaffold.of(context).openDrawer();
-                    },
-                  );
-                },
-              ),
-              actions: [
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.logout),
-                  color: Colors.white,
-                )
-              ],
-            ),
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.lightBlueAccent, Colors.lightGreenAccent],
-                ),
-              ),
-              child: const Center(
-                child: Text(
-                  "This is the second page",
-                  style: TextStyle(color: Colors.white, fontSize: 24),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.lightBlueAccent, Colors.lightGreenAccent],
-                ),
-              ),
-              child: Text(
-                'Menu',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
-              ),
-            ),
-            ListTile(
-              title: const Text('Main Menu'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const ActivityTracker()),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                var fetchedEvents =
+                    await firebaseManager.fetchAndConvertEvents();
+                setState(() {
+                  events = fetchedEvents;
+                  print('Events fetched and stored: $events');
+                });
+              } catch (e) {
+                print('Failed to fetch events: $e');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Failed to fetch events: $e')),
+                );
+              }
+            },
+            child: const Text("Fetch Events"),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: events.length,
+              itemBuilder: (context, index) {
+                FirebaseEvent event = events[index];
+                return ListTile(
+                  title: Text(event.taskTitle),
+                  subtitle:
+                      Text('Start: ${event.startTime}, End: ${event.endTime}'),
+                  trailing: Text('Duration: ${event.duration}'),
                 );
               },
             ),
-            ListTile(
-              title: const Text('Visualisation'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const OptionTwoPage()),
-                );
-              },
-            ),
-            // Add more ListTile widgets for additional menu options
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
