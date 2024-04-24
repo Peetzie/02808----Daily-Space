@@ -7,6 +7,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:dailyspace/custom_classes/firebase_event.dart';
 import 'package:dailyspace/google/firebase_handler.dart';
+import 'package:tuple/tuple.dart';
 
 class OptionTwoPage extends StatefulWidget {
   const OptionTwoPage({Key? key}) : super(key: key);
@@ -18,7 +19,7 @@ class OptionTwoPage extends StatefulWidget {
 class _OptionTwoPageState extends State<OptionTwoPage> {
   final FirebaseManager firebaseManager = FirebaseManager();
   List<FirebaseEvent> events = [];
-  Map<String, double> averageDelays = {};
+  Map<Tuple2<String, String>, double> averageDelays = {};
 
   @override
   void initState() {
@@ -41,13 +42,17 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
   }
 
   void calculateAverageDelays() {
-    Map<String, List<int>> delaysByCalendar = {};
+    Map<Tuple2<String, String>, List<int>> delaysByCalendar = {};
 
     for (var event in events) {
       if (event.startTime != null && event.startedAt != null) {
         int delay = TimeFormatter.calculateTimeDifferenceInMinutes(
             event.startTime!, event.startedAt!);
-        delaysByCalendar.update(event.calendarName, (delays) {
+
+        // Use a tuple as the key
+        Tuple2<String, String> key = Tuple2(event.calendarName, event.colorId);
+
+        delaysByCalendar.update(key, (delays) {
           delays.add(delay);
           return delays;
         }, ifAbsent: () => [delay]);

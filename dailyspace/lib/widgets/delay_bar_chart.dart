@@ -1,10 +1,14 @@
-import 'package:flutter/material.dart';
+import 'dart:developer';
+
+import 'package:dailyspace/custom_classes/helper.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:dailyspace/resources/app_colors.dart'; // Ensure this file contains the necessary color definitions.
+import 'package:flutter/material.dart';
+import 'package:tuple/tuple.dart';
 
 class DelayBarChart extends StatelessWidget {
-  final Map<String, double> averageDelays;
+  final Map<Tuple2<String, String>, double> averageDelays;
   final int overflowChars = 13;
+
   DelayBarChart(this.averageDelays);
 
   @override
@@ -24,8 +28,11 @@ class DelayBarChart extends StatelessWidget {
               tooltipPadding: const EdgeInsets.all(8),
               tooltipMargin: 8,
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                final key = averageDelays.keys.elementAt(groupIndex);
+                final calendarName = key.item1;
+                final colorId = key.item2;
                 return BarTooltipItem(
-                  averageDelays.keys.elementAt(groupIndex) + '\n',
+                  calendarName + '\n',
                   TextStyle(color: Colors.white),
                   children: <TextSpan>[
                     TextSpan(
@@ -48,18 +55,20 @@ class DelayBarChart extends StatelessWidget {
                 reservedSize: 42,
                 getTitlesWidget: (double value, TitleMeta meta) {
                   final index = value.toInt();
-                  String title = averageDelays.keys.elementAt(index);
+                  final key = averageDelays.keys.elementAt(index);
+                  final calendarName = key.item1;
                   return SideTitleWidget(
-                      axisSide: meta.axisSide,
-                      space: 16.0,
-                      child: Text(
-                        title.length > overflowChars
-                            ? title.substring(0, overflowChars) + '...'
-                            : title,
-                        overflow: title.length > overflowChars
-                            ? TextOverflow.ellipsis
-                            : TextOverflow.visible,
-                      ));
+                    axisSide: meta.axisSide,
+                    space: 16.0,
+                    child: Text(
+                      calendarName.length > overflowChars
+                          ? calendarName.substring(0, overflowChars) + '...'
+                          : calendarName,
+                      overflow: calendarName.length > overflowChars
+                          ? TextOverflow.ellipsis
+                          : TextOverflow.visible,
+                    ),
+                  );
                 },
               ),
             ),
@@ -71,13 +80,15 @@ class DelayBarChart extends StatelessWidget {
           borderData: FlBorderData(show: false),
           barGroups: averageDelays.keys.map((key) {
             final index = averageDelays.keys.toList().indexOf(key);
+            final keysplit = averageDelays.keys.elementAt(index);
+            final colorId = keysplit.item2;
             return BarChartGroupData(
               x: index,
               barRods: [
                 BarChartRodData(
                   toY: averageDelays[key] ?? 0,
-                  color: Color.fromARGB(177, 68, 223,
-                      40), // Ensure you define this color in AppColors
+                  color: getColorFromId(
+                      colorId), // Use colorMap to get color dynamically
                   width: 22,
                 ),
               ],
