@@ -85,9 +85,9 @@ class _ActivityTrackerState extends State<ActivityTracker> {
       // Fetch active tasks from Firebase
       Map<String, FirebaseEvent> firebaseTasks =
           await firebaseManager.fetchActiveEvents();
-      log(firebaseTasks.toString());
       final tasks = await GoogleServices.fetchTasksFromCalendar(
           account, selectedCalendars);
+      log(tasks.toString());
       final now = DateTime.now();
 
       setState(() {
@@ -495,10 +495,19 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                         earlyStartActivities.forEach((task) {
                           if (selectedTaskIds.contains(task.taskId)) {
                             DateTime now = DateTime.now();
-                            String formattedTimeStamp =
-                                DateFormat("yyyy-MM-dd HH:mm:ss").format(now);
+                            String formattedTimeStampWithTimeZone =
+                                DateFormat("yyyy-MM-ddTHH:mm:ss").format(
+                                    now); // Format without milliseconds and with timezone
+                            String timezoneOffset = now.timeZoneOffset.inHours >
+                                    0
+                                ? "+${now.timeZoneOffset.inHours.abs().toString().padLeft(2, '0')}:00"
+                                : "-${now.timeZoneOffset.inHours.abs().toString().padLeft(2, '0')}:00"; // Calculate timezone offset
+                            formattedTimeStampWithTimeZone += timezoneOffset;
                             FirebaseEvent event = FirebaseEvent.fromTaskInfo(
-                                task, now, null, null);
+                                task,
+                                formattedTimeStampWithTimeZone,
+                                null,
+                                null);
                             firebaseManager.addFirebaseEvent(event);
                             activeActivities.add(event);
                           }

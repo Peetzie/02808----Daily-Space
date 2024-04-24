@@ -20,6 +20,22 @@ class TimeFormatter {
     return "";
   }
 
+  static int calculateTimeDifferenceInMinutes(
+      String? timestamp1, String? timestamp2) {
+    if (timestamp1 == null || timestamp2 == null) {
+      return 0; // or handle null case as needed
+    }
+
+    // Parse timestamps
+    DateTime dateTime1 = DateTime.parse(timestamp1);
+    DateTime dateTime2 = DateTime.parse(timestamp2);
+
+    // Calculate difference
+    Duration difference = dateTime2.difference(dateTime1);
+    int differenceInMinutes = difference.inMinutes;
+    return differenceInMinutes;
+  }
+
   static String? calculateDuration(DateTime? startedAt, DateTime? endedAt) {
     if (startedAt == null || endedAt == null) return null;
     return endedAt.difference(startedAt).toString();

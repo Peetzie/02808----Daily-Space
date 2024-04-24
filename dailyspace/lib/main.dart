@@ -158,19 +158,31 @@ class _MainScreenState extends State<MainScreen> {
         bottomNavigationBar: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard),
+              icon: Icon(
+                Icons.dashboard,
+                color: Colors.black,
+              ),
               label: 'Tracker',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_today),
+              icon: Icon(
+                Icons.calendar_today,
+                color: Colors.black,
+              ),
               label: 'Calendar',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.show_chart),
+              icon: Icon(
+                Icons.show_chart,
+                color: Colors.black,
+              ),
               label: 'Visualize',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
+              icon: Icon(
+                Icons.settings,
+                color: Colors.black,
+              ),
               label: 'Settings',
             ),
           ],

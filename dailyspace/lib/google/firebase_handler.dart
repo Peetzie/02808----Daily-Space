@@ -46,6 +46,7 @@ class FirebaseManager {
           activeEventsMap[event.taskId] =
               event; // Assume taskId is a unique key for each event
         }
+
         return activeEventsMap;
       } catch (e) {
         log("Error fetching active events: ${e.toString()}");

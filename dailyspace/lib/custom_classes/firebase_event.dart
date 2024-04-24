@@ -36,13 +36,7 @@ class FirebaseEvent {
   }
 
   static FirebaseEvent fromTaskInfo(
-      TaskInfo task, DateTime? startedAt, DateTime? endedAt, String? duration) {
-    String? formatDateTime(DateTime? datetime) {
-      return datetime != null
-          ? DateFormat('yyyy-MM-dd HH:mm:ss').format(datetime).toString()
-          : null;
-    }
-
+      TaskInfo task, String? startedAt, String? endedAt, String? duration) {
     return FirebaseEvent(
         task.taskId,
         task.calendarName,
@@ -50,8 +44,8 @@ class FirebaseEvent {
         task.start, // Ensure these are correctly formatted or null
         task.end, // Ensure these are correctly formatted or null
         task.colorId,
-        formatDateTime(startedAt),
-        formatDateTime(endedAt),
+        startedAt,
+        endedAt,
         duration);
   }
 
