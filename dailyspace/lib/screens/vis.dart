@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:dailyspace/custom_classes/helper.dart';
 import 'package:dailyspace/resources/app_colors.dart';
 import 'package:dailyspace/widgets/delay_bar_chart.dart';
+import 'package:dailyspace/widgets/task_completion.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:dailyspace/custom_classes/firebase_event.dart';
@@ -18,7 +19,8 @@ class OptionTwoPage extends StatefulWidget {
 
 class _OptionTwoPageState extends State<OptionTwoPage> {
   final FirebaseManager firebaseManager = FirebaseManager();
-  List<FirebaseEvent> events = [];
+  List<FirebaseEvent> endedEvents = [];
+  List<FirebaseEvent> allEvents = [];
   Map<Tuple2<String, String>, double> averageDelays = {};
 
   @override
@@ -30,8 +32,10 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
   Future<void> fetchEvents() async {
     try {
       var fetchedEvents = await firebaseManager.fetchAndConvertEndedEvents();
+      var allFetchedEvents = await firebaseManager.fetchActiveAndEndedEvents();
       setState(() {
-        events = fetchedEvents;
+        endedEvents = fetchedEvents;
+        allEvents = allFetchedEvents;
         calculateAverageDelays();
       });
     } catch (e) {
@@ -44,7 +48,7 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
   void calculateAverageDelays() {
     Map<Tuple2<String, String>, List<int>> delaysByCalendar = {};
 
-    for (var event in events) {
+    for (var event in endedEvents) {
       if (event.startTime != null && event.startedAt != null) {
         int delay = TimeFormatter.calculateTimeDifferenceInMinutes(
             event.startTime!, event.startedAt!);
@@ -78,6 +82,8 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
             onPressed: fetchEvents,
             child: const Text("Refresh Events"),
           ),
+          TaskCompletionWidget(
+              totalTasks: allEvents.length, completedTasks: endedEvents.length),
           SizedBox(height: 20),
           averageDelays.isNotEmpty
               ? DelayBarChart(

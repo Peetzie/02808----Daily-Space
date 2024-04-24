@@ -57,6 +57,49 @@ class FirebaseManager {
       throw Exception("User is not authenticated");
     }
   }
+// Inside FirebaseManager class
+
+  Future<List<FirebaseEvent>> fetchActiveAndEndedEvents() async {
+    User? user = _auth.currentUser;
+    if (user == null) {
+      log("User is not authenticated");
+      throw Exception('User is not authenticated');
+    }
+
+    List<FirebaseEvent> combinedEventList = [];
+
+    try {
+      // Fetch active events
+      QuerySnapshot activeEventsSnapshot = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('activeEvents')
+          .where('endedAt', isNull: true)
+          .get();
+
+      for (DocumentSnapshot eventDoc in activeEventsSnapshot.docs) {
+        combinedEventList.add(
+            FirebaseEvent.fromMap(eventDoc.data() as Map<String, dynamic>));
+      }
+
+      // Fetch ended events
+      QuerySnapshot endedEventsSnapshot = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('endedEvents')
+          .get();
+
+      for (DocumentSnapshot eventDoc in endedEventsSnapshot.docs) {
+        combinedEventList.add(
+            FirebaseEvent.fromMap(eventDoc.data() as Map<String, dynamic>));
+      }
+
+      return combinedEventList;
+    } catch (e) {
+      log("Error fetching events: ${e.toString()}");
+      return []; // Return an empty list in case of error
+    }
+  }
 
   Future<void> endEvent(String taskId) async {
     User? user = _auth.currentUser;

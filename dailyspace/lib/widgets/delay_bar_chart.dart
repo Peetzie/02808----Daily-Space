@@ -8,6 +8,7 @@ import 'package:tuple/tuple.dart';
 class DelayBarChart extends StatelessWidget {
   final Map<Tuple2<String, String>, double> averageDelays;
   final int overflowChars = 13;
+  double yMax = 100;
 
   DelayBarChart(this.averageDelays);
 
@@ -17,10 +18,12 @@ class DelayBarChart extends StatelessWidget {
       height: 300,
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: BarChart(
+        swapAnimationDuration: Duration(milliseconds: 70), // Optional
+        swapAnimationCurve: Curves.linear,
         BarChartData(
           alignment: BarChartAlignment.spaceAround,
-          maxY: findMaxDelay() *
-              1.2, // Gives some extra space above the highest bar
+          maxY: yMax,
+          minY: -30,
           barTouchData: BarTouchData(
             enabled: true,
             touchTooltipData: BarTouchTooltipData(
@@ -76,20 +79,26 @@ class DelayBarChart extends StatelessWidget {
               sideTitles: SideTitles(showTitles: false),
             ),
           ),
-          gridData: FlGridData(show: false),
+          gridData: FlGridData(
+              show: false,
+              checkToShowHorizontalLine: (value) => value % 10 == 0,
+              getDrawingHorizontalLine: (value) =>
+                  FlLine(color: const Color(0xffe7e8ec), strokeWidth: 1)),
           borderData: FlBorderData(show: false),
           barGroups: averageDelays.keys.map((key) {
             final index = averageDelays.keys.toList().indexOf(key);
             final keysplit = averageDelays.keys.elementAt(index);
             final colorId = keysplit.item2;
+            double yval = averageDelays[key] ?? 0;
+            bool isOverflowing = yval > yMax;
             return BarChartGroupData(
               x: index,
               barRods: [
                 BarChartRodData(
-                  toY: averageDelays[key] ?? 0,
+                  toY: isOverflowing ? yMax : yval,
                   color: getColorFromId(
                       colorId), // Use colorMap to get color dynamically
-                  width: 22,
+                  width: 4,
                 ),
               ],
             );
