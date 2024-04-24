@@ -120,7 +120,6 @@ class GoogleServices {
         continue;
       }
 
-      log(item.toString());
       String taskId = item['id'] ?? "";
       String title = item['summary'] ?? "";
       String updated = item['updated'] ?? "";
@@ -142,7 +141,6 @@ class GoogleServices {
         'colorId': colorId
       };
     }
-    log(tasksDictionary.toString());
     return tasksDictionary;
   }
 

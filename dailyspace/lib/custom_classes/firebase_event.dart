@@ -1,5 +1,5 @@
 import 'package:dailyspace/custom_classes/taskinfo.dart';
-import 'package:intl/intl.dart'; // Include to format DateTime
+import 'package:intl/intl.dart';
 
 class FirebaseEvent {
   final String taskId;
@@ -7,8 +7,8 @@ class FirebaseEvent {
   final String? startTime;
   final String? endTime;
   final String colorId;
-  final String? startedAt; // Changed to String? to store formatted DateTime
-  final String? endedAt; // Changed to String? to store formatted DateTime
+  final String? startedAt;
+  final String? endedAt;
   final String? duration;
 
   FirebaseEvent(this.taskId, this.taskTitle, this.startTime, this.endTime,
@@ -16,7 +16,7 @@ class FirebaseEvent {
 
   @override
   String toString() {
-    return 'FirebaseEvent(taskId: $taskId, title: $taskTitle, start: $startTime, end: $endTime, colorId: $colorId)';
+    return 'FirebaseEvent(taskId: $taskId, taskTitle: $taskTitle, startTime: $startTime, endTime: $endTime, colorId: $colorId, startedAt: $startedAt, endedAt: $endedAt, duration: $duration)';
   }
 
   Map<String, dynamic> toMap() {
@@ -30,19 +30,6 @@ class FirebaseEvent {
       'endedAt': endedAt,
       'duration': duration,
     };
-  }
-
-  static FirebaseEvent fromMap(Map<String, dynamic> map) {
-    return FirebaseEvent(
-      map['taskId'] as String,
-      map['taskTitle'] as String,
-      map['startTime'] as String?,
-      map['endTime'] as String?,
-      map['colorId'] as String,
-      map['startedAt'] as String?,
-      map['endedAt'] as String?,
-      map['duration'] as String?,
-    );
   }
 
   static FirebaseEvent fromTaskInfo(
@@ -62,5 +49,18 @@ class FirebaseEvent {
         formatDateTime(startedAt),
         formatDateTime(endedAt),
         duration);
+  }
+
+  static FirebaseEvent fromMap(Map<String, dynamic> map) {
+    return FirebaseEvent(
+      map['taskId'] as String,
+      map['taskTitle'] as String,
+      map['startTime'] as String?,
+      map['endTime'] as String?,
+      map['colorId'] as String,
+      map['startedAt'] as String?,
+      map['endedAt'] as String?,
+      map['duration'] as String?,
+    );
   }
 }
