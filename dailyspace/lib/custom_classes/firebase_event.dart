@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dailyspace/custom_classes/taskinfo.dart';
 import 'package:intl/intl.dart';
 
@@ -36,7 +37,7 @@ class FirebaseEvent {
       TaskInfo task, DateTime? startedAt, DateTime? endedAt, String? duration) {
     String? formatDateTime(DateTime? datetime) {
       return datetime != null
-          ? DateFormat('yyyy-MM-dd HH:mm:ss').format(datetime)
+          ? DateFormat('yyyy-MM-dd HH:mm:ss').format(datetime).toString()
           : null;
     }
 
@@ -55,11 +56,19 @@ class FirebaseEvent {
     return FirebaseEvent(
       map['taskId'] as String,
       map['taskTitle'] as String,
-      map['startTime'] as String?,
-      map['endTime'] as String?,
+      map['startTime'] is Timestamp
+          ? (map['startTime'] as Timestamp).toDate().toString()
+          : map['startTime'] as String?,
+      map['endTime'] is Timestamp
+          ? (map['endTime'] as Timestamp).toDate().toString()
+          : map['endTime'] as String?,
       map['colorId'] as String,
-      map['startedAt'] as String?,
-      map['endedAt'] as String?,
+      map['startedAt'] is Timestamp
+          ? (map['startedAt'] as Timestamp).toDate().toString()
+          : map['startedAt'] as String?,
+      map['endedAt'] is Timestamp
+          ? (map['endedAt'] as Timestamp).toDate().toString()
+          : map['endedAt'] as String?,
       map['duration'] as String?,
     );
   }

@@ -82,6 +82,35 @@ class FirebaseManager {
     }
   }
 
+  Future<Set<FirebaseEvent>> fetchEventsTEst() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      try {
+        var snapshot = await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('events')
+            .get();
+
+        // Convert the list of DocumentSnapshots to a Map
+        Set<FirebaseEvent> allEvents = {};
+        for (var doc in snapshot.docs) {
+          FirebaseEvent event =
+              FirebaseEvent.fromMap(doc.data() as Map<String, dynamic>);
+          allEvents.add(event);
+        }
+
+        return allEvents;
+      } catch (e) {
+        log("Error fetching active events: ${e.toString()}");
+        return {}; // Return an empty map in case of error
+      }
+    } else {
+      log("User is not authenticated");
+      throw Exception("User is not authenticated");
+    }
+  }
+
   Future<List<FirebaseEvent>> fetchAndConvertEvents() async {
     User? user = _auth.currentUser;
     if (user == null) {
