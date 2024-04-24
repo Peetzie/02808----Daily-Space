@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 class FirebaseEvent {
   final String taskId;
+  final String calendarName;
   final String taskTitle;
   final String? startTime;
   final String? endTime;
@@ -12,17 +13,18 @@ class FirebaseEvent {
   final String? endedAt;
   final String? duration;
 
-  FirebaseEvent(this.taskId, this.taskTitle, this.startTime, this.endTime,
-      this.colorId, this.startedAt, this.endedAt, this.duration);
+  FirebaseEvent(this.taskId, this.calendarName, this.taskTitle, this.startTime,
+      this.endTime, this.colorId, this.startedAt, this.endedAt, this.duration);
 
   @override
   String toString() {
-    return 'FirebaseEvent(taskId: $taskId, taskTitle: $taskTitle, startTime: $startTime, endTime: $endTime, colorId: $colorId, startedAt: $startedAt, endedAt: $endedAt, duration: $duration)';
+    return 'FirebaseEvent(taskId: $taskId, calendarName: $calendarName, taskTitle: $taskTitle, startTime: $startTime, endTime: $endTime, colorId: $colorId, startedAt: $startedAt, endedAt: $endedAt, duration: $duration)';
   }
 
   Map<String, dynamic> toMap() {
     return {
       'taskId': taskId,
+      'calendarName': calendarName,
       'taskTitle': taskTitle,
       'startTime': startTime,
       'endTime': endTime,
@@ -43,6 +45,7 @@ class FirebaseEvent {
 
     return FirebaseEvent(
         task.taskId,
+        task.calendarName,
         task.title,
         task.start, // Ensure these are correctly formatted or null
         task.end, // Ensure these are correctly formatted or null
@@ -55,6 +58,7 @@ class FirebaseEvent {
   static FirebaseEvent fromMap(Map<String, dynamic> map) {
     return FirebaseEvent(
       map['taskId'] as String,
+      map['calendarName'] as String,
       map['taskTitle'] as String,
       map['startTime'] is Timestamp
           ? (map['startTime'] as Timestamp).toDate().toString()

@@ -92,8 +92,8 @@ class _ActivityTrackerState extends State<ActivityTracker> {
 
       setState(() {
         tasks.values.forEach((task) {
-          TaskInfo newTask = TaskInfo(task['taskId'], task['title'],
-              task['start'], task['end'], task['colorId']);
+          TaskInfo newTask = TaskInfo(task['taskId'], task['calendarName'],
+              task['title'], task['start'], task['end'], task['colorId']);
 
           DateTime taskStart;
           int difference;
