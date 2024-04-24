@@ -54,7 +54,8 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     if (account != null) {
       await _fetchCalendars();
       await _fetchAndLogCalendars(); // Wait for _fetchAndLogCalendars() to complete
-      _fetchActivities(); // Now call _fetchActivities() after _fetchAndLogCalendars() finishes
+      await _fetchActivities(); // Now call _fetchActivities() after _fetchAndLogCalendars() finishes
+      _fetchActiveEvents();
     } else {
       // Handle the scenario where sign-in failed or was declined
       debugPrint("Google sign-in failed or was declined by the user.");
@@ -72,7 +73,6 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     final calendars = await GoogleServices.fetchCalendars(account);
     setState(() {
       calendars.forEach((title, value) {
-        log(title);
         availableCalendars.add(title);
       });
     });
@@ -80,13 +80,12 @@ class _ActivityTrackerState extends State<ActivityTracker> {
 
   Future<void> _fetchActivities() async {
     try {
+      availableActivities.clear();
+      earlyStartActivities.clear();
       // Fetch active tasks from Firebase
       Map<String, FirebaseEvent> firebaseTasks =
           await firebaseManager.fetchActiveEvents();
-
-      availableActivities.clear();
-      earlyStartActivities.clear();
-
+      log(firebaseTasks.toString());
       final tasks = await GoogleServices.fetchTasksFromCalendar(
           account, selectedCalendars);
       final now = DateTime.now();
@@ -535,9 +534,10 @@ class _ActivityTrackerState extends State<ActivityTracker> {
 
   void _fetchActiveEvents() async {
     try {
-      var activeEvents = await firebaseManager.fetchActiveEvents();
+      var activeEventsMap = await firebaseManager.fetchActiveEvents();
+      var activeEvents = activeEventsMap.values.toSet();
       setState(() {
-        activeEvents = activeEvents;
+        activeActivities = activeEvents;
       });
     } catch (e) {
       debugPrint('Error fetching active events: ${e.toString()}');
@@ -615,7 +615,6 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     try {
       selectedCalendars = await FirebaseManager().fetchSelectedCalendars();
       // Now `selectedCalendars` is populated with the fetched data
-      log("Selected calendars on page load: ${selectedCalendars.toString()}");
     } catch (e) {
       log("Error fetching calendars: $e");
     }

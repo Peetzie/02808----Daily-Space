@@ -16,7 +16,7 @@ class FirebaseEvent {
 
   @override
   String toString() {
-    return 'FirebaseEvent(taskId: $taskId, title: $taskTitle, start: $startTime,end:$endTime, colorId: $colorId)';
+    return 'FirebaseEvent(taskId: $taskId, taskTitle: $taskTitle, startTime: $startTime, endTime: $endTime, colorId: $colorId, startedAt: $startedAt, endedAt: $endedAt, duration: $duration)';
   }
 
   Map<String, dynamic> toMap() {

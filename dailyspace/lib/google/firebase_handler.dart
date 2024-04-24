@@ -46,8 +46,6 @@ class FirebaseManager {
           activeEventsMap[event.taskId] =
               event; // Assume taskId is a unique key for each event
         }
-
-        log("Fetched active events");
         return activeEventsMap;
       } catch (e) {
         log("Error fetching active events: ${e.toString()}");
@@ -150,7 +148,7 @@ class FirebaseManager {
               as Map<String, dynamic>; // Cast to Map<String, dynamic>
           List<dynamic> calendars = data['selectedCalendars'];
           // Log the fetched calendars
-          log("Fetched selected calendars: $calendars");
+
           // Return the list as a Set of Strings
           return Set<String>.from(
               calendars.map((calendar) => calendar.toString()));
