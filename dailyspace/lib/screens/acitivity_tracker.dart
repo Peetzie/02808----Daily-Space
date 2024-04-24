@@ -137,7 +137,6 @@ class _ActivityTrackerState extends State<ActivityTracker> {
           }
         });
       });
-
       log("List of available activities fetched on reload: $availableActivities");
     } catch (e) {
       // Handle potential errors from the fetch call
