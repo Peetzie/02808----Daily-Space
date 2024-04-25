@@ -1,3 +1,5 @@
+import 'package:dailyspace/services/google_sign_in_manager.dart';
+import 'package:dailyspace/widgets/activity_tracker/activity_manager.dart';
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart'; // Import your login screen widget
 import 'package:firebase_core/firebase_core.dart';
@@ -15,11 +17,10 @@ import 'package:dailyspace/screens/acitivity_tracker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import '../google/google_sign_in_manager.dart';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:provider/provider.dart';
-import 'package:dailyspace/activity_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

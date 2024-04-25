@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:dailyspace/custom_classes/taskinfo.dart';
+import 'package:dailyspace/datastructures/taskinfo.dart';
 
 class ActivityManager with ChangeNotifier {
   Map<String, TaskInfo>? _availableActivities;

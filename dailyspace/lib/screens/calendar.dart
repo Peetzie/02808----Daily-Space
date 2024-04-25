@@ -1,5 +1,6 @@
+import 'package:dailyspace/datastructures/taskinfo.dart';
 import 'package:flutter/material.dart';
-import 'package:dailyspace/custom_classes/taskinfo.dart';
+
 import 'package:intl/intl.dart';
 
 class Calendar extends StatelessWidget {

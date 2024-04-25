@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:dailyspace/datastructures/Timeformatter.dart';
 import 'package:dailyspace/sources/app_colors.dart';
 import 'package:dailyspace/widgets/graphs/delay_bar_chart.dart';
+import 'package:dailyspace/widgets/graphs/delayed_min.dart';
+import 'package:dailyspace/widgets/graphs/period_control.dart';
 import 'package:dailyspace/widgets/graphs/task_completion.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -76,13 +78,30 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
 
   @override
   Widget build(BuildContext context) {
+    double height = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(title: const Text("Event Visualization")),
       body: Column(
         children: [
+          Text(
+            "My Report",
+            style: TextStyle(
+                fontSize: height * 0.03,
+                fontWeight: FontWeight.bold,
+                color: AppColors.contentColorPurple),
+          ),
+          SegmentedControl(
+            height: height,
+          ),
+
           ElevatedButton(
             onPressed: fetchEvents,
             child: const Text("Refresh Events"),
+          ),
+          SizedBox(height: 10),
+          DelayAverageDurationWidget(averageDelays: averageDelays),
+          SizedBox(
+            height: 10,
           ),
           TaskCompletionWidget(
               totalTasks: allEvents.length, completedTasks: endedEvents.length),
