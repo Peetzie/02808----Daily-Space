@@ -10,6 +10,8 @@ import 'package:dailyspace/screens/login_screen.dart';
 import 'package:dailyspace/screens/vis.dart';
 import 'package:dailyspace/widgets/activity_tracker/add_calendar.dart';
 import 'package:dailyspace/widgets/activity_tracker/calendar_overlay.dart';
+import 'package:dailyspace/widgets/activity_tracker/reason_dialog.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:intl/intl.dart'; // Import the intl package
@@ -90,6 +92,8 @@ class _ActivityTrackerState extends State<ActivityTracker> {
           await firebaseManager.fetchActiveEvents();
       Set<String> endedFirebaseTasksIds =
           await firebaseManager.fetchAllEndedEventIds();
+      Map<String, FirebaseEvent> firebaseDelayedTasks =
+          await firebaseManager.fetchDelayedEvents();
       final tasks = await GoogleServices.fetchTasksFromCalendar(
           account, selectedCalendars);
       log(tasks.toString());
@@ -103,49 +107,83 @@ class _ActivityTrackerState extends State<ActivityTracker> {
           DateTime taskStart;
           int difference;
 
-          // Check if the task is already active, skip if it is
+          // Check if the task is already active or ended, skip if it is
           if (!firebaseTasks.containsKey(task['taskId']) &&
               !endedFirebaseTasksIds.contains(task['taskId'])) {
-            if (task['start'].contains("T")) {
-              // Time-specific task start
-              taskStart = DateTime.parse(task['start']);
-              difference = taskStart.difference(now).inMinutes;
-            } else {
-              // Full-day or date-only event
-              try {
-                taskStart = DateFormat('yyyy-MM-dd').parse(task['start']);
-                difference = now.difference(taskStart).inMinutes;
-              } catch (e) {
-                log("Error parsing date-only start: ${e.toString()}");
-                return; // Skip this iteration on parse error
-              }
-
-              // Special handling for full-day tasks that start today
-              if (DateFormat('yyyy-MM-dd').format(taskStart) ==
-                  DateFormat('yyyy-MM-dd').format(now)) {
-                earlyStartActivities.add(newTask);
-                return; // Add to start today and skip further checks
-              }
-            }
-
-            // Regular checks for tasks with specific times
-            if (DateFormat('yyyy-MM-dd').format(taskStart) ==
-                DateFormat('yyyy-MM-dd').format(now)) {
-              if (difference.abs() <= 30) {
-                earlyStartActivities.add(newTask);
-              } else {
-                availableActivities[task['taskId']] = newTask;
-              }
-            } else {
-              availableActivities[task['taskId']] = newTask;
-            }
+            handleTaskTiming(task, now, newTask);
           }
         });
-      });
 
-      log("Updated lists of activities based on current statuses.");
+        // Handle delayed tasks
+        firebaseDelayedTasks.values.forEach((delayedTask) {
+          TaskInfo newTask = TaskInfo(
+              delayedTask.taskId,
+              delayedTask.calendarName,
+              delayedTask.taskTitle,
+              delayedTask.delay?.last,
+              delayedTask.endTime,
+              delayedTask.colorId);
+          DateTime taskStart = DateTime.parse(delayedTask.delay!.last);
+          int difference = now.difference(taskStart).inMinutes;
+
+          if (DateFormat('yyyy-MM-dd').format(taskStart) ==
+              DateFormat('yyyy-MM-dd').format(now)) {
+            if (difference.abs() <= 30) {
+              earlyStartActivities.add(newTask);
+            } else {
+              availableActivities[delayedTask.taskId] = newTask;
+            }
+          } else {
+            availableActivities[delayedTask.taskId] = newTask;
+          }
+        });
+
+        earlyStartActivities.removeWhere(
+            (task) => availableActivities.containsKey(task.taskId));
+
+        log("Updated lists of activities based on current statuses.");
+      });
     } catch (e) {
       log("Error fetching tasks: ${e.toString()}");
+    }
+  }
+
+  void handleTaskTiming(
+      Map<String, dynamic> task, DateTime now, TaskInfo newTask) {
+    DateTime taskStart;
+    int difference;
+    if (task['start'].contains("T")) {
+      // Time-specific task start
+      taskStart = DateTime.parse(task['start']);
+      difference = taskStart.difference(now).inMinutes;
+    } else {
+      // Full-day or date-only event
+      try {
+        taskStart = DateFormat('yyyy-MM-dd').parse(task['start']);
+        difference = now.difference(taskStart).inMinutes;
+      } catch (e) {
+        log("Error parsing date-only start: ${e.toString()}");
+        return; // Skip this iteration on parse error
+      }
+
+      // Special handling for full-day tasks that start today
+      if (DateFormat('yyyy-MM-dd').format(taskStart) ==
+          DateFormat('yyyy-MM-dd').format(now)) {
+        earlyStartActivities.add(newTask);
+        return; // Add to start today and skip further checks
+      }
+    }
+
+    // Regular checks for tasks with specific times
+    if (DateFormat('yyyy-MM-dd').format(taskStart) ==
+        DateFormat('yyyy-MM-dd').format(now)) {
+      if (difference.abs() <= 30) {
+        earlyStartActivities.add(newTask);
+      } else {
+        availableActivities[task['taskId']] = newTask;
+      }
+    } else {
+      availableActivities[task['taskId']] = newTask;
     }
   }
 
@@ -382,6 +420,8 @@ class _ActivityTrackerState extends State<ActivityTracker> {
         });
       },
       builder: (context, candidateData, rejectedData) {
+        bool areButtonsEnabled = selectedTaskIds.isNotEmpty;
+        bool laterEnabled = (selectedTaskIds.length == 1);
         return Container(
           height: height,
           width: width,
@@ -483,37 +523,89 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <Widget>[
                   ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        earlyStartActivities.forEach((task) {
-                          if (selectedTaskIds.contains(task.taskId)) {
-                            DateTime now = DateTime.now();
-                            String formattedTimeStampWithTimeZone =
-                                DateFormat("yyyy-MM-ddTHH:mm:ss").format(
-                                    now); // Format without milliseconds and with timezone
-                            String timezoneOffset = now.timeZoneOffset.inHours >
-                                    0
-                                ? "+${now.timeZoneOffset.inHours.abs().toString().padLeft(2, '0')}:00"
-                                : "-${now.timeZoneOffset.inHours.abs().toString().padLeft(2, '0')}:00"; // Calculate timezone offset
-                            formattedTimeStampWithTimeZone += timezoneOffset;
-                            FirebaseEvent event = FirebaseEvent.fromTaskInfo(
-                                task,
-                                formattedTimeStampWithTimeZone,
-                                null,
-                                null);
-                            firebaseManager.addFirebaseEvent(event);
-                            activeActivities.add(event);
+                    onPressed: areButtonsEnabled
+                        ? () {
+                            setState(() {
+                              earlyStartActivities.forEach((task) {
+                                if (selectedTaskIds.contains(task.taskId)) {
+                                  DateTime now = DateTime.now();
+                                  String formattedTimeStampWithTimeZone =
+                                      DateFormat("yyyy-MM-ddTHH:mm:ss").format(
+                                          now); // Format without milliseconds and with timezone
+                                  String timezoneOffset = now
+                                              .timeZoneOffset.inHours >
+                                          0
+                                      ? "+${now.timeZoneOffset.inHours.abs().toString().padLeft(2, '0')}:00"
+                                      : "-${now.timeZoneOffset.inHours.abs().toString().padLeft(2, '0')}:00"; // Calculate timezone offset
+                                  formattedTimeStampWithTimeZone +=
+                                      timezoneOffset;
+                                  FirebaseEvent event =
+                                      FirebaseEvent.fromTaskInfo(
+                                          task,
+                                          formattedTimeStampWithTimeZone,
+                                          null,
+                                          null,
+                                          null,
+                                          null);
+                                  firebaseManager.addFirebaseEvent(event);
+                                  activeActivities.add(event);
+                                }
+                              });
+                              earlyStartActivities.removeWhere((task) =>
+                                  selectedTaskIds.contains(task.taskId));
+                              selectedTaskIds.clear();
+                            });
                           }
-                        });
-                        earlyStartActivities.removeWhere(
-                            (task) => selectedTaskIds.contains(task.taskId));
-                        selectedTaskIds.clear();
-                      });
-                    },
+                        : null,
                     child: Text('Start Now!'),
                   ),
                   ElevatedButton(
-                    onPressed: () async {},
+                    onPressed: areButtonsEnabled && laterEnabled
+                        ? () async {
+                            var delayResult = await reasonDialog(context);
+                            if (delayResult != null) {
+                              String reason = delayResult['reason'];
+                              String delay =
+                                  TimeFormatter.convertDurationToISO8601(
+                                      delayResult['delay']);
+
+                              // only one can be selected so we can use first element of selected as identifier.
+                              if (selectedTaskIds.isNotEmpty) {
+                                log(reason);
+                                String selectedTaskId = selectedTaskIds.first;
+                                TaskInfo selectedTask =
+                                    earlyStartActivities.firstWhere((task) =>
+                                        task.taskId == selectedTaskId);
+                                if (selectedTask != null) {
+                                  FirebaseEvent? existingEvent =
+                                      await firebaseManager
+                                          .fetchDelayedEvent(selectedTaskId);
+                                  if (existingEvent != null) {
+                                    existingEvent.reasons?.add(reason);
+                                    existingEvent.delay?.add(delay);
+
+                                    // updatie existing event
+                                    await firebaseManager.updateDelayedEvent(
+                                        selectedTaskId, existingEvent);
+                                  } else {
+                                    List<String> reasons = [];
+                                    List<String> delays = [];
+                                    reasons.add(reason);
+                                    delays.add(delay);
+
+                                    FirebaseEvent newDelayedEvent =
+                                        FirebaseEvent.fromTaskInfo(selectedTask,
+                                            null, null, null, reasons, delays);
+                                    firebaseManager
+                                        .addDelayedEvent(newDelayedEvent);
+                                    earlyStartActivities.remove(selectedTaskId);
+                                    ;
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        : null,
                     child: Text('Later'),
                   ),
                 ],

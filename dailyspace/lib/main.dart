@@ -1,7 +1,6 @@
 import 'package:dailyspace/services/google_sign_in_manager.dart';
 import 'package:dailyspace/widgets/activity_tracker/activity_manager.dart';
 import 'package:flutter/material.dart';
-// Import your login screen widget
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

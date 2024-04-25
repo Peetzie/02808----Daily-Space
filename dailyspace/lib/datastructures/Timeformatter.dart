@@ -1,4 +1,3 @@
-
 import 'package:intl/intl.dart';
 
 class TimeFormatter {
@@ -16,6 +15,19 @@ class TimeFormatter {
       }
     }
     return "";
+  }
+
+  static String convertDurationToISO8601(Duration duration) {
+    // Get the current date and time
+    DateTime now = DateTime.now();
+
+    // Add the duration to the current date and time
+    DateTime delayedDateTime = now.add(duration);
+
+    // Format the delayed date and time to ISO 8601 format
+    String iso8601DateTime = delayedDateTime.toIso8601String();
+
+    return iso8601DateTime;
   }
 
   static int calculateTimeDifferenceInMinutes(
