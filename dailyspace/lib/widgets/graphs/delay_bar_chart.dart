@@ -1,6 +1,4 @@
-import 'dart:developer';
 
-import 'package:dailyspace/datastructures/Timeformatter.dart';
 import 'package:dailyspace/sources/app_colors.dart';
 import 'package:dailyspace/sources/palette.dart';
 import 'package:dailyspace/widgets/graphs/sliderDialog.dart';
@@ -13,7 +11,7 @@ class DelayBarChart extends StatelessWidget {
   final int overflowChars = 8;
   double yMax = 100;
 
-  DelayBarChart(this.averageDelays);
+  DelayBarChart(this.averageDelays, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +30,7 @@ class DelayBarChart extends StatelessWidget {
                 color: Colors.black.withOpacity(0.1),
                 spreadRadius: 3,
                 blurRadius: 7,
-                offset: Offset(0, 3), // changes position of shadow
+                offset: const Offset(0, 3), // changes position of shadow
               ),
             ],
           ),
@@ -43,7 +41,7 @@ class DelayBarChart extends StatelessWidget {
             height: 300,
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: BarChart(
-              swapAnimationDuration: Duration(milliseconds: 70), // Optional
+              swapAnimationDuration: const Duration(milliseconds: 70), // Optional
               swapAnimationCurve: Curves.linear,
               BarChartData(
                 extraLinesData: ExtraLinesData(horizontalLines: [
@@ -77,12 +75,12 @@ class DelayBarChart extends StatelessWidget {
                       final colorId = key.item2;
 
                       return BarTooltipItem(
-                        calendarName + '\n',
-                        TextStyle(color: Colors.white),
+                        '$calendarName\n',
+                        const TextStyle(color: Colors.white),
                         children: <TextSpan>[
                           TextSpan(
                             text: '${averageDelays[key]} mins',
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.yellow,
                               fontWeight: FontWeight.bold,
                             ),
@@ -107,8 +105,7 @@ class DelayBarChart extends StatelessWidget {
                           space: 16.0,
                           child: Text(
                             calendarName.length > overflowChars
-                                ? calendarName.substring(0, overflowChars) +
-                                    '...'
+                                ? '${calendarName.substring(0, overflowChars)}...'
                                 : calendarName,
                             overflow: calendarName.length > overflowChars
                                 ? TextOverflow.ellipsis
@@ -118,7 +115,7 @@ class DelayBarChart extends StatelessWidget {
                       },
                     ),
                   ),
-                  leftTitles: AxisTitles(
+                  leftTitles: const AxisTitles(
                     sideTitles: SideTitles(showTitles: false),
                   ),
                 ),
@@ -127,7 +124,7 @@ class DelayBarChart extends StatelessWidget {
                     checkToShowHorizontalLine: (value) => value % yMax == 0,
                     getDrawingHorizontalLine: (value) {
                       // Returning default line for other values
-                      return FlLine(
+                      return const FlLine(
                           color: Color.fromARGB(255, 46, 48, 52),
                           strokeWidth: 1);
                     }),
@@ -158,7 +155,7 @@ class DelayBarChart extends StatelessWidget {
           right: 2,
           top: 2,
           child: IconButton(
-            icon: Icon(Icons.settings, color: Colors.white),
+            icon: const Icon(Icons.settings, color: Colors.white),
             onPressed: () {
               RangeSliderDialog.show(context);
             },

@@ -6,8 +6,9 @@ typedef SelectionChanged<T> = void Function(T selection);
 
 class SegmentedControl extends StatefulWidget {
   final double height;
-
-  const SegmentedControl({Key? key, required this.height}) : super(key: key);
+  final SelectionChanged<int> onValueChanged;
+  const SegmentedControl(
+      {super.key, required this.height, required this.onValueChanged});
 
   @override
   _SegmentedControlState createState() => _SegmentedControlState();
@@ -49,7 +50,7 @@ class _SegmentedControlState extends State<SegmentedControl> {
     return Container(
       width: double
           .infinity, // This will make the segmented control take up full width
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
           horizontal:
               30), // Add padding if you want some space from the screen edges
       child: CupertinoSegmentedControl<int>(
@@ -58,13 +59,14 @@ class _SegmentedControlState extends State<SegmentedControl> {
           setState(() {
             sharedValue = newValue;
           });
+          widget.onValueChanged(newValue);
         },
         groupValue: sharedValue,
         borderColor: Colors.black,
         selectedColor: AppColors.contentColorPurple.withAlpha(30),
         unselectedColor: Colors.white,
         pressedColor: Colors.blue.withOpacity(0.3),
-        padding: EdgeInsets.all(10),
+        padding: const EdgeInsets.all(10),
         // Increase the border radius for a more rounded look
       ),
     );

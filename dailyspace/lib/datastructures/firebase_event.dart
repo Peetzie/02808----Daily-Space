@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dailyspace/datastructures/taskinfo.dart';
-import 'package:intl/intl.dart';
 
 class FirebaseEvent {
   final String taskId;

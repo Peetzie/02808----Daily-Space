@@ -32,7 +32,7 @@ class GoogleServices {
     if (account != null) {
       final authHeaders = await account.authHeaders;
       final googleHttpClient = GoogleHttpClient(authHeaders);
-      final baseUrl = 'https://www.googleapis.com/calendar/v3/calendars';
+      const baseUrl = 'https://www.googleapis.com/calendar/v3/calendars';
 
       for (final entry in calendarData.entries) {
         final name = entry.key;
@@ -91,7 +91,7 @@ class GoogleServices {
       final authHeaders = await account.authHeaders;
       final googleHttpClient = GoogleHttpClient(authHeaders);
       final url = Uri.parse(
-          'https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events');
+          'https://www.googleapis.com/calendar/v3/calendars/$calendarId/events');
 
       final response = await googleHttpClient.get(url);
 

@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 class Calendar extends StatelessWidget {
   final Map<String, TaskInfo>? availableActivities;
 
-  const Calendar({Key? key, this.availableActivities}) : super(key: key);
+  const Calendar({super.key, this.availableActivities});
 
   @override
   Widget build(BuildContext context) {
@@ -14,11 +14,11 @@ class Calendar extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Calendar Activities'),
+        title: const Text('Calendar Activities'),
         backgroundColor: Colors.blue,
       ),
       body: activities.isEmpty
-          ? Center(child: Text('No activities available'))
+          ? const Center(child: Text('No activities available'))
           : buildActivitiesTimeline(activities),
     );
   }
@@ -32,7 +32,7 @@ class Calendar extends StatelessWidget {
           .toList();
 
       Widget timeLabel = Container(
-        padding: EdgeInsets.symmetric(
+        padding: const EdgeInsets.symmetric(
             vertical: 16), // Adjust the space for each hour
         child: Text('${hour.toString().padLeft(2, '0')}:00'),
       );
@@ -59,11 +59,11 @@ class Calendar extends StatelessWidget {
   Widget buildTaskTile(TaskInfo task) {
     return Flexible(
       child: Container(
-        padding: EdgeInsets.all(4.0),
+        padding: const EdgeInsets.all(4.0),
         child: ListTile(
           title: Text(
             task.title,
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: const TextStyle(fontWeight: FontWeight.bold),
             overflow: TextOverflow.ellipsis,
           ),
           subtitle: Text(

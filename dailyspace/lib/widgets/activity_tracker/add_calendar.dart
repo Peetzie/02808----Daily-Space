@@ -1,4 +1,3 @@
-import 'package:dailyspace/datastructures/Timeformatter.dart';
 import 'package:dailyspace/services/google_services.dart';
 import 'package:dailyspace/services/google_sign_in_manager.dart';
 import 'package:dailyspace/sources/palette.dart';
@@ -17,15 +16,15 @@ class AddCalendarOverlay extends StatefulWidget {
     'Digital life': 8,
   };
 
-  AddCalendarOverlay({Key? key}) : super(key: key);
+  AddCalendarOverlay({super.key});
 
   @override
   _AddCalendarOverlayState createState() => _AddCalendarOverlayState();
 }
 
 class _AddCalendarOverlayState extends State<AddCalendarOverlay> {
-  Map<String, String> _selectedColors = {};
-  Map<String, bool> _selectedCalendars = {};
+  final Map<String, String> _selectedColors = {};
+  final Map<String, bool> _selectedCalendars = {};
   bool _isLoading = false;
   double _progress = 0.0;
 
@@ -41,15 +40,15 @@ class _AddCalendarOverlayState extends State<AddCalendarOverlay> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Add Calendar'),
+      title: const Text('Add Calendar'),
       content: _isLoading
           ? Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 20),
+                const CircularProgressIndicator(),
+                const SizedBox(height: 20),
                 LinearProgressIndicator(value: _progress), // Progress bar
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 Text('${(_progress * 100).toStringAsFixed(0)}% completed'),
               ],
             )
@@ -58,11 +57,11 @@ class _AddCalendarOverlayState extends State<AddCalendarOverlay> {
           ? <Widget>[
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text('Cancel'),
+                child: const Text('Cancel'),
               ),
               TextButton(
                 onPressed: createCalendars,
-                child: Text('OK'),
+                child: const Text('OK'),
               ),
             ]
           : null,
@@ -122,7 +121,7 @@ class _AddCalendarOverlayState extends State<AddCalendarOverlay> {
                 backgroundColor: getColorFromId(i.toString()),
                 radius: 8,
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
             ],
           ),
         ));

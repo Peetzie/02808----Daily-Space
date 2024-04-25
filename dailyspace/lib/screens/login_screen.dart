@@ -3,10 +3,8 @@ import 'package:auth_buttons/auth_buttons.dart';
 import 'package:dailyspace/screens/acitivity_tracker.dart';
 import 'package:dailyspace/services/firebase_handler.dart';
 import 'package:dailyspace/services/google_sign_in_manager.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginScreen extends StatelessWidget {

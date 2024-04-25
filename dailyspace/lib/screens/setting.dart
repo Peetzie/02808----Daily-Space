@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class SettingsPage2 extends StatefulWidget {
-  const SettingsPage2({Key? key}) : super(key: key);
+  const SettingsPage2({super.key});
 
   @override
   State<SettingsPage2> createState() => _SettingsPage2State();
@@ -81,8 +81,7 @@ class _CustomListTile extends StatelessWidget {
   final IconData icon;
   final Widget? trailing;
   const _CustomListTile(
-      {Key? key, required this.title, required this.icon, this.trailing})
-      : super(key: key);
+      {required this.title, required this.icon, this.trailing});
 
   @override
   Widget build(BuildContext context) {
@@ -99,10 +98,9 @@ class _SingleSection extends StatelessWidget {
   final String? title;
   final List<Widget> children;
   const _SingleSection({
-    Key? key,
     this.title,
     required this.children,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

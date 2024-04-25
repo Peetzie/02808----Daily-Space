@@ -6,9 +6,9 @@ class RangeSliderDialog {
       context: context,
       builder: (BuildContext context) {
         double initialValue = 50; // initial value for range slider
-        RangeValues selectedRange = RangeValues(0, 100); // range for slider
+        RangeValues selectedRange = const RangeValues(0, 100); // range for slider
         return AlertDialog(
-          title: Text('Select Range'),
+          title: const Text('Select Range'),
           content: StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) {
               return Column(
@@ -26,7 +26,7 @@ class RangeSliderDialog {
                   ),
                   Text(
                     'Selected Range: ${selectedRange.start} - ${selectedRange.end}',
-                    style: TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 16),
                   ),
                 ],
               );
@@ -34,13 +34,13 @@ class RangeSliderDialog {
           ),
           actions: <Widget>[
             ElevatedButton(
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
-              child: Text('Apply'),
+              child: const Text('Apply'),
               onPressed: () {
                 // Apply the selected range
                 // You can pass the selected range values to wherever needed

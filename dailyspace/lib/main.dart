@@ -1,25 +1,19 @@
 import 'package:dailyspace/services/google_sign_in_manager.dart';
 import 'package:dailyspace/widgets/activity_tracker/activity_manager.dart';
 import 'package:flutter/material.dart';
-import 'screens/login_screen.dart'; // Import your login screen widget
+// Import your login screen widget
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'screens/acitivity_tracker.dart';
 import 'screens/vis.dart';
 import 'screens/setting.dart';
 import 'screens/calendar.dart';
 import 'dart:developer';
 import 'package:auth_buttons/auth_buttons.dart';
-import 'package:dailyspace/screens/acitivity_tracker.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
@@ -147,13 +141,13 @@ class _MainScreenState extends State<MainScreen> {
         body: IndexedStack(
           index: _selectedIndex,
           children: <Widget>[
-            ActivityTracker(),
+            const ActivityTracker(),
             Consumer<ActivityManager>(
               builder: (context, manager, child) =>
                   Calendar(availableActivities: manager.availableActivities),
             ),
-            OptionTwoPage(),
-            SettingsPage2(),
+            const OptionTwoPage(),
+            const SettingsPage2(),
           ],
         ),
         bottomNavigationBar: BottomNavigationBar(

@@ -10,10 +10,10 @@ class CalendarOverlayDialog extends StatefulWidget {
   final Set<String> selectedCalendars;
 
   const CalendarOverlayDialog({
-    Key? key,
+    super.key,
     required this.availableCalendars,
     required this.selectedCalendars,
-  }) : super(key: key);
+  });
 
   @override
   _CalendarOverlayDialogState createState() => _CalendarOverlayDialogState();
@@ -35,13 +35,13 @@ class _CalendarOverlayDialogState extends State<CalendarOverlayDialog> {
                 TextStyle(fontSize: width * 0.06, fontWeight: FontWeight.bold),
           ),
           IconButton(
-            icon: Icon(Icons.download),
+            icon: const Icon(Icons.download),
             onPressed: () {
               _fetchCalendars();
             },
           ),
           IconButton(
-            icon: Icon(Icons.add),
+            icon: const Icon(Icons.add),
             onPressed: () {
               _openAddCalendarOverlay();
             },
@@ -79,13 +79,13 @@ class _CalendarOverlayDialogState extends State<CalendarOverlayDialog> {
             await firebaseManager.saveSelectedCalendars(_newSelectedCalendars!);
             Navigator.of(context).pop(_newSelectedCalendars);
           },
-          child: Text('OK'),
+          child: const Text('OK'),
         ),
         TextButton(
           onPressed: () {
             Navigator.of(context).pop(_newSelectedCalendars);
           },
-          child: Text('Cancel'),
+          child: const Text('Cancel'),
         ),
       ],
     );

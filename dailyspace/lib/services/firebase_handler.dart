@@ -1,10 +1,7 @@
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:dailyspace/datastructures/Timeformatter.dart';
-import 'package:dailyspace/datastructures/taskinfo.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dailyspace/datastructures/firebase_event.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 class FirebaseManager {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -42,7 +39,7 @@ class FirebaseManager {
         Map<String, FirebaseEvent> activeEventsMap = {};
         for (var doc in snapshot.docs) {
           FirebaseEvent event =
-              FirebaseEvent.fromMap(doc.data() as Map<String, dynamic>);
+              FirebaseEvent.fromMap(doc.data());
           activeEventsMap[event.taskId] =
               event; // Assume taskId is a unique key for each event
         }
@@ -166,14 +163,14 @@ class FirebaseManager {
             .doc(user.uid)
             .collection('endedEvents')
             .get();
-        Set<String> eventIds = Set<String>();
+        Set<String> eventIds = <String>{};
         for (var doc in snapshot.docs) {
           eventIds.add(doc.id);
         }
         return eventIds;
       } catch (e) {
         log("Error fetching ended evnet IDs: ${e.toString()}");
-        return Set<String>();
+        return <String>{};
       }
     } else {
       log("User is not authenticated");
@@ -233,11 +230,11 @@ class FirebaseManager {
               calendars.map((calendar) => calendar.toString()));
         } else {
           log("No selected calendars data found");
-          return Set<String>();
+          return <String>{};
         }
       }).catchError((error) {
         log("Failed to fetch selected calendars: $error");
-        return Set<String>(); // Return an empty set on error
+        return <String>{}; // Return an empty set on error
       });
     } else {
       log("User is not authenticated");

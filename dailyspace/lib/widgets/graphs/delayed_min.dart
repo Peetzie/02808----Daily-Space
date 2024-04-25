@@ -5,8 +5,7 @@ import 'package:tuple/tuple.dart';
 class DelayAverageDurationWidget extends StatelessWidget {
   final Map<Tuple2<String, String>, double> averageDelays;
 
-  const DelayAverageDurationWidget({Key? key, required this.averageDelays})
-      : super(key: key);
+  const DelayAverageDurationWidget({super.key, required this.averageDelays});
   double computeAverageOfAverages(
       Map<Tuple2<String, String>, double> averages) {
     if (averages.isEmpty) return 0.0;
@@ -20,18 +19,18 @@ class DelayAverageDurationWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final double average = computeAverageOfAverages(averageDelays);
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
           color: AppColors.contentColorPurple.withAlpha(30),
           borderRadius: BorderRadius.circular(10),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
               color: Colors.black26,
               blurRadius: 8,
               offset: Offset(0, 2),
             )
           ]),
-      child: Text("Task start delayed by an average of ${average} min"),
+      child: Text("Task start delayed by an average of $average min"),
     );
   }
 }

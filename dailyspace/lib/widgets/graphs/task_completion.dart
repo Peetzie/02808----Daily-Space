@@ -5,10 +5,10 @@ class TaskCompletionWidget extends StatelessWidget {
   final int completedTasks;
 
   const TaskCompletionWidget({
-    Key? key,
+    super.key,
     required this.totalTasks,
     required this.completedTasks,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,11 +16,11 @@ class TaskCompletionWidget extends StatelessWidget {
         totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0.0;
 
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.green,
         borderRadius: BorderRadius.circular(10),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: Colors.black26,
             blurRadius: 8,
@@ -30,7 +30,7 @@ class TaskCompletionWidget extends StatelessWidget {
       ),
       child: Text(
         'Completion: ${completionPercentage.toStringAsFixed(1)}%',
-        style: TextStyle(
+        style: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
         ),
