@@ -1,4 +1,3 @@
-
 import 'package:dailyspace/sources/app_colors.dart';
 import 'package:dailyspace/sources/palette.dart';
 import 'package:dailyspace/widgets/graphs/sliderDialog.dart';
@@ -41,7 +40,8 @@ class DelayBarChart extends StatelessWidget {
             height: 300,
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: BarChart(
-              swapAnimationDuration: const Duration(milliseconds: 70), // Optional
+              swapAnimationDuration:
+                  const Duration(milliseconds: 70), // Optional
               swapAnimationCurve: Curves.linear,
               BarChartData(
                 extraLinesData: ExtraLinesData(horizontalLines: [

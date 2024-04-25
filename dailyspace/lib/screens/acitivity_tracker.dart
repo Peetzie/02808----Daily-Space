@@ -14,9 +14,10 @@ import 'package:dailyspace/widgets/activity_tracker/reason_dialog.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:intl/intl.dart'; // Import the intl package
-
 import 'package:dailyspace/datastructures/Timeformatter.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:dailyspace/widgets/activity_tracker/activity_manager.dart';
 
 class ActivityTracker extends StatefulWidget {
   const ActivityTracker({Key? key}) : super(key: key);
@@ -325,8 +326,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               itemBuilder: (context, index) {
                 final task = availableActivities.values.elementAt(index);
 
-                return _buildTaskContainer(
-                    task.title, task.start, task.colorId);
+                return _buildTaskContainer(task);
               },
             ),
           ),
@@ -341,69 +341,111 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     return dateFormat.format(now);
   }
 
-  Widget _buildTaskContainer(String title, String? start, String colorId) {
-    // Determine if the task is overdue
-    bool isOverdue =
-        start != null && DateTime.parse(start).isBefore(DateTime.now());
+  Widget _buildTaskContainer(TaskInfo task) {
+    bool isOverdue = task.start != null &&
+        DateTime.parse(task.start!).isBefore(DateTime.now());
 
-    return Container(
-      height: MediaQuery.of(context).size.width * 0.23,
-      width: MediaQuery.of(context).size.width * 0.23,
-      margin: EdgeInsets.symmetric(
-        horizontal: MediaQuery.of(context).size.width * 0.02,
-      ),
-      decoration: BoxDecoration(
-        color: getColorFromId(colorId),
-        shape: BoxShape.circle,
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        clipBehavior:
-            Clip.none, // Allow children to be rendered outside the container
-        children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: MediaQuery.of(context).size.width * 0.038,
-                ),
+    return LongPressDraggable<TaskInfo>(
+      data: task,
+      feedback: Material(
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.2,
+          height: MediaQuery.of(context).size.width * 0.2,
+          decoration: BoxDecoration(
+            color: getColorFromId(task.colorId),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 8,
+                offset: Offset(0, 2),
               ),
-              if (start != null &&
-                  start != "") // Check if start date is not empty
-                Text(
-                  TimeFormatter.formatTime(start),
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: MediaQuery.of(context).size.width * 0.03,
-                  ),
-                ),
             ],
           ),
-          // Overlay the badge at the bottom right if the task is overdue
-          if (isOverdue)
-            Positioned(
-              right: MediaQuery.of(context).size.width *
-                  0.03, // Adjust position to overlap the border
-              bottom: -MediaQuery.of(context).size.width *
-                  0.01, // Adjust position to overlap the border
-              child: Container(
-                padding: EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 1),
-                ),
-                child: Icon(
-                  Icons.alarm,
-                  size: MediaQuery.of(context).size.width * 0.04,
-                  color: Colors.white,
-                ),
+          child: Center(
+            child: Text(
+              task.title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: MediaQuery.of(context).size.width * 0.038,
               ),
             ),
-        ],
+          ),
+        ),
+        elevation: 4.0,
+        color:
+            Colors.transparent, // Make sure the Material widget is transparent
+      ),
+      onDragStarted: () {
+        // Actions to perform when dragging starts
+      },
+      childWhenDragging: Container(
+        width: MediaQuery.of(context).size.width * 0.23,
+        height: MediaQuery.of(context).size.width * 0.23,
+        decoration: BoxDecoration(
+          color:
+              Colors.transparent, // Maintain the space, but make it invisible
+          shape: BoxShape.circle,
+        ),
+      ),
+      child: Container(
+        // Ensure this is the only 'child' property in this widget
+        height: MediaQuery.of(context).size.width * 0.23,
+        width: MediaQuery.of(context).size.width * 0.23,
+        margin: EdgeInsets.symmetric(
+          horizontal: MediaQuery.of(context).size.width * 0.02,
+        ),
+        decoration: BoxDecoration(
+          color: getColorFromId(task.colorId),
+          shape: BoxShape.circle,
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  task.title,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: MediaQuery.of(context).size.width * 0.038,
+                  ),
+                ),
+                if (task.start != null)
+                  Text(
+                    TimeFormatter.formatTime(task.start),
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: MediaQuery.of(context).size.width * 0.03,
+                    ),
+                  ),
+              ],
+            ),
+            if (isOverdue)
+              Positioned(
+                right: MediaQuery.of(context).size.width *
+                    0.03, // Adjust position to overlap the border
+                bottom: -MediaQuery.of(context).size.width *
+                    0.01, // Adjust position to overlap the border
+                child: Container(
+                  padding: EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1),
+                  ),
+                  child: Icon(
+                    Icons.alarm,
+                    size: MediaQuery.of(context).size.width * 0.04,
+                    color: Colors.white,
+                  ),
+                ),
+              )
+          ],
+        ),
       ),
     );
   }
@@ -662,15 +704,20 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          // Only display this task if activeActivities is empty
+          // Only display this task if activeActivities is not empty
           Expanded(
               child: ListView.builder(
             itemCount: activeActivities.length,
             itemBuilder: (context, index) {
               FirebaseEvent event = activeActivities.elementAt(index);
+              DateTime? startedDateTime =
+                  DateTime.tryParse(event.startedAt ?? '');
+              String formattedDate = startedDateTime != null
+                  ? DateFormat('yyyy-MM-dd – kk:mm').format(startedDateTime)
+                  : 'Date not available';
               return ListTile(
                 title: Text(event.taskTitle),
-                subtitle: Text('Started at ${event.startedAt}'),
+                subtitle: Text('Started at $formattedDate'),
                 trailing: ElevatedButton(
                   onPressed: () => _endEvent(event),
                   child: Text('Finish'),

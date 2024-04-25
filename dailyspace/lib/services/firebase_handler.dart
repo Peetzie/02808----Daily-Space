@@ -3,14 +3,29 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dailyspace/sources/default_reasons.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dailyspace/datastructures/firebase_event.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:intl/intl.dart';
 
 class FirebaseManager {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  get eventData => null;
+
   Future<void> addFirebaseEvent(FirebaseEvent event) async {
     User? user = _auth.currentUser;
     if (user != null) {
+      // Format startedAt as a string in the consistent format
+      String? formattedStartedAt = event.startedAt != null
+          ? DateFormat('yyyy-MM-dd HH:mm:ss')
+              .format(DateTime.parse(event.startedAt!))
+          : null;
+
+      var eventMap = event.toMap();
+      // Apply the formatted startedAt if it's not null
+      if (formattedStartedAt != null) {
+        eventMap['startedAt'] = formattedStartedAt;
+      }
       _firestore
           .collection('users')
           .doc(user.uid)
@@ -267,7 +282,22 @@ class FirebaseManager {
       if (eventSnapshot.exists) {
         Map<String, dynamic> eventData =
             eventSnapshot.data() as Map<String, dynamic>;
-        eventData['endedAt'] = FieldValue.serverTimestamp();
+
+        // Format current date and time as a string
+        String formattedDate = DateFormat("yyyy-MM-dd'T'HH:mm:ss'+00:00'")
+            .format(DateTime.now().toUtc());
+        eventData['endedAt'] = formattedDate;
+
+        // Handle the duration calculation
+        if (eventData['startedAt'] != null) {
+          DateTime start = DateTime.parse(eventData['startedAt']);
+          DateTime end =
+              DateTime.now().toUtc(); // Use the current time as the end time
+          int durationInMinutes =
+              end.difference(start).inHours; // Store the duration in minutes
+          eventData['duration'] =
+              durationInMinutes.toString(); // Convert duration to String
+        }
 
         // Copy the ended event to the 'endedEvents' collection
         await _firestore

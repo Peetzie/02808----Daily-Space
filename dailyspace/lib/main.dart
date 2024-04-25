@@ -12,7 +12,6 @@ import 'screens/calendar.dart';
 import 'dart:developer';
 import 'package:auth_buttons/auth_buttons.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
 import 'package:provider/provider.dart';
 
 void main() async {

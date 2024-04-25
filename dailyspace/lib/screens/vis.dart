@@ -9,7 +9,9 @@ import 'package:dailyspace/widgets/graphs/task_completion.dart';
 import 'package:flutter/material.dart';
 import 'package:dailyspace/datastructures/firebase_event.dart';
 import 'package:dailyspace/services/firebase_handler.dart';
+import 'dart:math';
 import 'package:tuple/tuple.dart';
+import 'package:dailyspace/widgets/graphs/duration_bar_chart.dart';
 
 class OptionTwoPage extends StatefulWidget {
   const OptionTwoPage({super.key});
@@ -30,6 +32,7 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
   List<FirebaseEvent> endedEvents = [];
   List<FirebaseEvent> allEvents = [];
   Map<Tuple2<String, String>, double> averageDelays = {};
+  Map<String, double> taskDurations = {};
 
   @override
   void initState() {
@@ -41,6 +44,7 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
     try {
       endedEvents.clear();
       allEvents.clear();
+      taskDurations.clear();
       var fetchedEvents = await firebaseManager.fetchAndConvertEndedEvents();
       var allFetchedEvents = await firebaseManager.fetchActiveAndEndedEvents();
 
@@ -48,6 +52,7 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
         endedEvents = fetchedEvents;
         allEvents = allFetchedEvents;
         calculateAverageDelays();
+        calculateTaskDurations();
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -55,6 +60,18 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
       );
     }
     filterEventsBasedOnSelectedPeriod();
+  }
+
+  void calculateTaskDurations() {
+    taskDurations.clear();
+    for (var event in endedEvents) {
+      double durationInHours =
+          (int.tryParse(event.duration ?? '0') ?? 0) / 60.0;
+      String calendarName = event.calendarName;
+      taskDurations.update(calendarName,
+          (existingDuration) => existingDuration + durationInHours,
+          ifAbsent: () => durationInHours);
+    }
   }
 
   void calculateAverageDelays() {
@@ -191,39 +208,43 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Event Visualization")),
-      body: Column(
-        children: [
-          Text(
-            "My Report",
-            style: TextStyle(
-                fontSize: height * 0.03,
-                fontWeight: FontWeight.bold,
-                color: AppColors.contentColorPurple),
+        appBar: AppBar(title: const Text("Event Visualization")),
+        body: SingleChildScrollView(
+          // Wrap the column in a SingleChildScrollView
+          child: Column(
+            children: [
+              Text(
+                "My Report",
+                style: TextStyle(
+                    fontSize: height * 0.03,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.contentColorPurple),
+              ),
+              SegmentedControl(
+                height: height,
+                onValueChanged: _handleSegmentedControlChange,
+              ),
+              ElevatedButton(
+                onPressed: fetchEvents,
+                child: const Text("Refresh Events"),
+              ),
+              const SizedBox(height: 10),
+              DelayAverageDurationWidget(averageDelays: averageDelays),
+              const SizedBox(height: 10),
+              TaskCompletionWidget(
+                  totalTasks: allEvents.length,
+                  completedTasks: endedEvents.length),
+              const SizedBox(height: 20),
+              averageDelays.isNotEmpty
+                  ? DelayBarChart(averageDelays) // Use the DelayBarChart widget
+                  : Container(), // Use an empty container if no data
+              const SizedBox(height: 20),
+              taskDurations.isNotEmpty
+                  ? DurationBarChart(
+                      taskDurations) // Use the DurationBarChart widget
+                  : Container(), // Use an empty container if no data
+            ],
           ),
-          SegmentedControl(
-            height: height,
-            onValueChanged: _handleSegmentedControlChange,
-          ),
-
-          ElevatedButton(
-            onPressed: fetchEvents,
-            child: const Text("Refresh Events"),
-          ),
-          const SizedBox(height: 10),
-          DelayAverageDurationWidget(averageDelays: averageDelays),
-          const SizedBox(
-            height: 10,
-          ),
-          TaskCompletionWidget(
-              totalTasks: allEvents.length, completedTasks: endedEvents.length),
-          const SizedBox(height: 20),
-          averageDelays.isNotEmpty
-              ? DelayBarChart(
-                  averageDelays) // Display the DelayBarChart widget with averageDelays data
-              : Container(), // Display an empty container if averageDelays is empty
-        ],
-      ),
-    );
+        ));
   }
 }
