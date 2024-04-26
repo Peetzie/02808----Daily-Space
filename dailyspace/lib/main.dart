@@ -180,7 +180,7 @@ class _MainScreenState extends State<MainScreen> {
             ),
           ],
           currentIndex: _selectedIndex,
-          selectedItemColor: Colors.amber[800],
+          selectedItemColor: Color.fromARGB(255, 186, 126, 243),
           onTap: (index) {
             setState(() => _selectedIndex = index);
           },

@@ -138,10 +138,10 @@ class _ActivityTrackerState extends State<ActivityTracker> {
             availableActivities[delayedTask.taskId] = newTask;
           }
         });
-
         earlyStartActivities.removeWhere(
             (task) => availableActivities.containsKey(task.taskId));
-
+        Provider.of<ActivityManager>(context, listen: false)
+            .setAvailableActivities(availableActivities);
         log("Updated lists of activities based on current statuses.");
       });
     } catch (e) {

@@ -15,7 +15,7 @@ class Calendar extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Calendar Activities'),
-        backgroundColor: Colors.blue,
+        backgroundColor: Color.fromARGB(255, 208, 171, 251),
       ),
       body: activities.isEmpty
           ? const Center(child: Text('No activities available'))

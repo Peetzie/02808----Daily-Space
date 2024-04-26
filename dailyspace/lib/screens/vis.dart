@@ -12,6 +12,7 @@ import 'package:dailyspace/services/firebase_handler.dart';
 import 'dart:math';
 import 'package:tuple/tuple.dart';
 import 'package:dailyspace/widgets/graphs/duration_bar_chart.dart';
+import 'package:dailyspace/widgets/graphs/reasons_pie_chart.dart';
 
 class OptionTwoPage extends StatefulWidget {
   const OptionTwoPage({super.key});
@@ -33,11 +34,15 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
   List<FirebaseEvent> allEvents = [];
   Map<Tuple2<String, String>, double> averageDelays = {};
   Map<String, double> taskDurations = {};
+  Map<String, int> reasonCounts = {};
+  bool showDelayBarChart = false;
+  bool showDurationBarChart = false;
 
   @override
   void initState() {
     super.initState();
     fetchEvents();
+    fetchReasons();
   }
 
   Future<void> fetchEvents() async {
@@ -65,13 +70,21 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
   void calculateTaskDurations() {
     taskDurations.clear();
     for (var event in endedEvents) {
-      double durationInHours =
-          (int.tryParse(event.duration ?? '0') ?? 0) / 60.0;
-      String calendarName = event.calendarName;
-      taskDurations.update(calendarName,
-          (existingDuration) => existingDuration + durationInHours,
-          ifAbsent: () => durationInHours);
+      double durationInMinutes =
+          (int.tryParse(event.duration ?? '0') ?? 0).toDouble();
+      String taskName = event.taskTitle;
+      taskDurations.update(
+          taskName, (existingDuration) => existingDuration + durationInMinutes,
+          ifAbsent: () => durationInMinutes);
     }
+  }
+
+  MapEntry<String, double>? _taskWithLongestDuration() {
+    if (taskDurations.isEmpty) {
+      return null;
+    }
+    return taskDurations.entries
+        .reduce((curr, next) => curr.value > next.value ? curr : next);
   }
 
   void calculateAverageDelays() {
@@ -102,6 +115,21 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
           : 0;
       averageDelays[calendar] = averageDelay;
     });
+  }
+
+  void fetchReasons() async {
+    try {
+      var reasonsList = await firebaseManager.fetchReasons();
+      Map<String, int> counts = {};
+      for (var reason in reasonsList) {
+        counts.update(reason, (value) => value + 1, ifAbsent: () => 1);
+      }
+      setState(() {
+        reasonCounts = counts;
+      });
+    } catch (e) {
+      print('Failed to fetch reasons: $e');
+    }
   }
 
   TimePeriod selectedPeriod = TimePeriod.day;
@@ -196,8 +224,6 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Add the selection callback
-
     double height = MediaQuery.of(context).size.height;
     if (selectedPeriod == TimePeriod.day) {
       dev.log("day");
@@ -207,10 +233,16 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
       dev.log("week");
     }
 
+    double screenWidth = MediaQuery.of(context).size.width;
+    double baseWidth = screenWidth * 0.9;
+    double containerHeight = 60;
+    const double uniformSpacing = 30.0;
+
+    var longestTaskEntry = _taskWithLongestDuration();
+
     return Scaffold(
         appBar: AppBar(title: const Text("Event Visualization")),
         body: SingleChildScrollView(
-          // Wrap the column in a SingleChildScrollView
           child: Column(
             children: [
               Text(
@@ -228,21 +260,86 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
                 onPressed: fetchEvents,
                 child: const Text("Refresh Events"),
               ),
+              SizedBox(height: uniformSpacing),
+              Container(
+                width: baseWidth,
+                child: TaskCompletionWidget(
+                    totalTasks: allEvents.length,
+                    completedTasks: endedEvents.length),
+              ),
+              const SizedBox(height: uniformSpacing),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    showDelayBarChart = !showDelayBarChart;
+                  });
+                },
+                child: Container(
+                  width: baseWidth,
+                  child:
+                      DelayAverageDurationWidget(averageDelays: averageDelays),
+                ),
+              ),
               const SizedBox(height: 10),
-              DelayAverageDurationWidget(averageDelays: averageDelays),
-              const SizedBox(height: 10),
-              TaskCompletionWidget(
-                  totalTasks: allEvents.length,
-                  completedTasks: endedEvents.length),
+              if (showDelayBarChart)
+                Container(
+                  width: baseWidth,
+                  child: DelayBarChart(averageDelays),
+                ),
               const SizedBox(height: 20),
-              averageDelays.isNotEmpty
-                  ? DelayBarChart(averageDelays) // Use the DelayBarChart widget
-                  : Container(), // Use an empty container if no data
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    showDurationBarChart = !showDurationBarChart;
+                  });
+                },
+                child: longestTaskEntry != null
+                    ? Container(
+                        width: baseWidth,
+                        height: containerHeight,
+                        decoration: BoxDecoration(
+                          color: Colors.orangeAccent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                            vertical: 8.0, horizontal: 16.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                "Task with the longest duration",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              "${longestTaskEntry.key} (${longestTaskEntry.value.toStringAsFixed(2)} hrs)",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : Container(),
+              ),
+              if (showDurationBarChart)
+                Container(
+                  width: baseWidth,
+                  child: DurationBarChart(taskDurations),
+                ),
               const SizedBox(height: 20),
-              taskDurations.isNotEmpty
-                  ? DurationBarChart(
-                      taskDurations) // Use the DurationBarChart widget
-                  : Container(), // Use an empty container if no data
+              Container(
+                width: baseWidth,
+                child: reasonCounts.isNotEmpty
+                    ? ReasonsPieChart(reasonCounts)
+                    : Text("No data available for reasons."),
+              ),
+              const SizedBox(height: 20),
             ],
           ),
         ));
