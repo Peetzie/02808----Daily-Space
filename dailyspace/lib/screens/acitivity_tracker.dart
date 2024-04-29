@@ -208,7 +208,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                   _buildAvailableActivities(),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.02),
                   _buildStartTask(),
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.08),
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.05),
                   _buildWaitingToFinish(),
                 ],
               ),

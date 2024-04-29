@@ -14,159 +14,182 @@ class DelayBarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    String maxDurationCategory = findMaxDurationCategory();
     double combinedAverageDelay = computeAverageOfAverages(averageDelays);
     double height = MediaQuery.of(context).size.height * 0.25;
     double width = MediaQuery.of(context).size.width * 0.8;
-    return Stack(
-      children: [
-        Container(
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: AppColors.contentColorPurple.withAlpha(30),
-            borderRadius: BorderRadius.circular(width * 0.03),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                spreadRadius: 3,
-                blurRadius: 7,
-                offset: const Offset(0, 3), // changes position of shadow
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.all(10),
-          margin: const EdgeInsets.all(10),
-          child: Container(
-            alignment: Alignment.center,
-            height: 300,
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: BarChart(
-              swapAnimationDuration:
-                  const Duration(milliseconds: 70), // Optional
-              swapAnimationCurve: Curves.linear,
-              BarChartData(
-                extraLinesData: ExtraLinesData(horizontalLines: [
-                  HorizontalLine(
-                      y: combinedAverageDelay,
-                      label: HorizontalLineLabel(
-                          show: true,
-                          labelResolver: (line) =>
-                              'Avg: ${line.y.toStringAsFixed(1)} mins', // Customize label text
-                          style: TextStyle(
-                            color: AppColors.contentColorRed.withAlpha(90),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 10,
-                          )),
-                      color: AppColors.contentColorRed.withAlpha(90),
-                      strokeWidth: 2,
-                      dashArray: [5, 5])
-                ]),
-                alignment: BarChartAlignment.spaceAround,
-                maxY: yMax,
-                minY: -30,
-                barTouchData: BarTouchData(
-                  enabled: true,
-                  touchTooltipData: BarTouchTooltipData(
-                    // Set a background color for tooltips
-                    tooltipPadding: const EdgeInsets.all(8),
-                    tooltipMargin: 8,
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      final key = averageDelays.keys.elementAt(groupIndex);
-                      final calendarName = key.item1;
-                      final colorId = key.item2;
 
-                      return BarTooltipItem(
-                        '$calendarName\n',
-                        const TextStyle(color: Colors.white),
-                        children: <TextSpan>[
-                          TextSpan(
-                            text: '${averageDelays[key]} mins',
-                            style: const TextStyle(
-                              color: Colors.yellow,
+    return Column(
+      children: [
+        const Padding(
+          padding: EdgeInsets.all(10.0),
+          child: Text('Delay Overview',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        ),
+        Stack(
+          children: [
+            Container(
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.contentColorPurple.withAlpha(30),
+                borderRadius: BorderRadius.circular(width * 0.03),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    spreadRadius: 3,
+                    blurRadius: 7,
+                    offset: const Offset(0, 3), // changes position of shadow
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(10),
+              margin: const EdgeInsets.all(10),
+              child: Container(
+                alignment: Alignment.center,
+                height: 300,
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: BarChart(
+                  swapAnimationDuration:
+                      const Duration(milliseconds: 70), // Optional
+                  swapAnimationCurve: Curves.linear,
+                  BarChartData(
+                    extraLinesData: ExtraLinesData(horizontalLines: [
+                      HorizontalLine(
+                          y: combinedAverageDelay,
+                          label: HorizontalLineLabel(
+                            show: true,
+                            labelResolver: (line) =>
+                                'Avg: ${line.y.toStringAsFixed(1)} mins', // Customize label text
+                            style: TextStyle(
+                              color: AppColors.contentColorRed.withAlpha(90),
                               fontWeight: FontWeight.bold,
+                              fontSize: 10,
                             ),
+                          ),
+                          color: AppColors.contentColorRed.withAlpha(90),
+                          strokeWidth: 2,
+                          dashArray: [5, 5])
+                    ]),
+                    alignment: BarChartAlignment.spaceAround,
+                    maxY: yMax,
+                    minY: -30,
+                    barTouchData: BarTouchData(
+                      enabled: true,
+                      touchTooltipData: BarTouchTooltipData(
+                        tooltipPadding: const EdgeInsets.all(8),
+                        tooltipMargin: 8,
+                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                          final key = averageDelays.keys.elementAt(groupIndex);
+                          final calendarName = key.item1;
+                          final colorId = key.item2;
+
+                          return BarTooltipItem(
+                            '$calendarName\n',
+                            const TextStyle(color: Colors.white),
+                            children: <TextSpan>[
+                              TextSpan(
+                                text: '${averageDelays[key]} mins',
+                                style: const TextStyle(
+                                  color: Colors.yellow,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 42,
+                          getTitlesWidget: (double value, TitleMeta meta) {
+                            final index = value.toInt();
+                            final key = averageDelays.keys.elementAt(index);
+                            final calendarName = key.item1;
+                            return SideTitleWidget(
+                              axisSide: meta.axisSide,
+                              space: 16.0,
+                              child: Text(
+                                calendarName.length > overflowChars
+                                    ? '${calendarName.substring(0, overflowChars)}...'
+                                    : calendarName,
+                                overflow: calendarName.length > overflowChars
+                                    ? TextOverflow.ellipsis
+                                    : TextOverflow.visible,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      leftTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                    ),
+                    gridData: FlGridData(
+                        show: true,
+                        checkToShowHorizontalLine: (value) => value % yMax == 0,
+                        getDrawingHorizontalLine: (value) {
+                          return const FlLine(
+                              color: Color.fromARGB(255, 46, 48, 52),
+                              strokeWidth: 1);
+                        }),
+                    borderData: FlBorderData(show: false),
+                    barGroups: averageDelays.keys.map((key) {
+                      final index = averageDelays.keys.toList().indexOf(key);
+                      final keysplit = averageDelays.keys.elementAt(index);
+                      final colorId = keysplit.item2;
+                      double yval = averageDelays[key] ?? 0;
+                      bool isOverflowing = yval > yMax;
+                      return BarChartGroupData(
+                        x: index,
+                        barRods: [
+                          BarChartRodData(
+                            toY: isOverflowing ? yMax : yval,
+                            color: getColorFromId(
+                                colorId), // Use colorMap to get color dynamically
+                            width: 4,
                           ),
                         ],
                       );
-                    },
+                    }).toList(),
                   ),
                 ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 42,
-                      getTitlesWidget: (double value, TitleMeta meta) {
-                        final index = value.toInt();
-                        final key = averageDelays.keys.elementAt(index);
-                        final calendarName = key.item1;
-                        return SideTitleWidget(
-                          axisSide: meta.axisSide,
-                          space: 16.0,
-                          child: Text(
-                            calendarName.length > overflowChars
-                                ? '${calendarName.substring(0, overflowChars)}...'
-                                : calendarName,
-                            overflow: calendarName.length > overflowChars
-                                ? TextOverflow.ellipsis
-                                : TextOverflow.visible,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  leftTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                ),
-                gridData: FlGridData(
-                    show: true,
-                    checkToShowHorizontalLine: (value) => value % yMax == 0,
-                    getDrawingHorizontalLine: (value) {
-                      // Returning default line for other values
-                      return const FlLine(
-                          color: Color.fromARGB(255, 46, 48, 52),
-                          strokeWidth: 1);
-                    }),
-                borderData: FlBorderData(show: false),
-                barGroups: averageDelays.keys.map((key) {
-                  final index = averageDelays.keys.toList().indexOf(key);
-                  final keysplit = averageDelays.keys.elementAt(index);
-                  final colorId = keysplit.item2;
-                  double yval = averageDelays[key] ?? 0;
-                  bool isOverflowing = yval > yMax;
-                  return BarChartGroupData(
-                    x: index,
-                    barRods: [
-                      BarChartRodData(
-                        toY: isOverflowing ? yMax : yval,
-                        color: getColorFromId(
-                            colorId), // Use colorMap to get color dynamically
-                        width: 4,
-                      ),
-                    ],
-                  );
-                }).toList(),
               ),
             ),
-          ),
+            Positioned(
+              right: 2,
+              top: 2,
+              child: IconButton(
+                icon: const Icon(Icons.settings, color: Colors.white),
+                onPressed: () {
+                  RangeSliderDialog.show(context);
+                },
+              ),
+            ),
+          ],
         ),
-        Positioned(
-          right: 2,
-          top: 2,
-          child: IconButton(
-            icon: const Icon(Icons.settings, color: Colors.white),
-            onPressed: () {
-              RangeSliderDialog.show(context);
-            },
-          ),
+        Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Text('You spent the longest time on: $maxDurationCategory',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ),
       ],
     );
   }
 
-  double findMaxDelay() {
-    return averageDelays.values.fold(0, (max, e) => e > max ? e : max);
+  String findMaxDurationCategory() {
+    double maxDuration = 0.0;
+    String maxCategory = '';
+    averageDelays.forEach((key, value) {
+      if (value > maxDuration) {
+        maxDuration = value;
+        maxCategory = key.item1;
+      }
+    });
+    return maxCategory;
   }
 
   double computeAverageOfAverages(

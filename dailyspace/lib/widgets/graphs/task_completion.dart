@@ -18,7 +18,7 @@ class TaskCompletionWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.green,
+        color: Color.fromARGB(255, 166, 163, 219),
         borderRadius: BorderRadius.circular(10),
         boxShadow: const [
           BoxShadow(
@@ -28,11 +28,23 @@ class TaskCompletionWidget extends StatelessWidget {
           ),
         ],
       ),
-      child: Text(
-        'Completion: ${completionPercentage.toStringAsFixed(1)}%',
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
+      child: RichText(
+        text: TextSpan(
+          text: 'Task Completion Rate:   ',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+          children: <TextSpan>[
+            TextSpan(
+              text: '${completionPercentage.toStringAsFixed(1)}%',
+              style: const TextStyle(
+                color: Color.fromARGB(255, 138, 25, 218),
+                fontWeight: FontWeight.bold,
+                fontSize: 24, // Increase this value to adjust the font size
+              ),
+            ),
+          ],
         ),
       ),
     );

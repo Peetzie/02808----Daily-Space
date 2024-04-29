@@ -14,8 +14,7 @@ class Calendar extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Calendar Activities'),
-        backgroundColor: Color.fromARGB(255, 208, 171, 251),
+        title: const Text('Activities To Do'),
       ),
       body: activities.isEmpty
           ? const Center(child: Text('No activities available'))
@@ -53,7 +52,12 @@ class Calendar extends StatelessWidget {
       );
     }
 
-    return ListView(children: timelineTasks);
+    // Wrap the ListView with Padding
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+          horizontal: 16.0), // Add horizontal padding
+      child: ListView(children: timelineTasks),
+    );
   }
 
   Widget buildTaskTile(TaskInfo task) {

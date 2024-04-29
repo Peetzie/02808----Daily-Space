@@ -1,7 +1,6 @@
 import 'dart:developer' as dev;
 import 'package:dailyspace/datastructures/TimePeriod.dart';
 import 'package:dailyspace/datastructures/Timeformatter.dart';
-import 'package:dailyspace/sources/app_colors.dart';
 import 'package:dailyspace/widgets/graphs/delay_bar_chart.dart';
 import 'package:dailyspace/widgets/graphs/delayed_min.dart';
 import 'package:dailyspace/widgets/graphs/period_control.dart';
@@ -9,10 +8,10 @@ import 'package:dailyspace/widgets/graphs/task_completion.dart';
 import 'package:flutter/material.dart';
 import 'package:dailyspace/datastructures/firebase_event.dart';
 import 'package:dailyspace/services/firebase_handler.dart';
-import 'dart:math';
 import 'package:tuple/tuple.dart';
 import 'package:dailyspace/widgets/graphs/duration_bar_chart.dart';
 import 'package:dailyspace/widgets/graphs/reasons_pie_chart.dart';
+import 'package:dailyspace/widgets/graphs/longest_task_widget.dart';
 
 class OptionTwoPage extends StatefulWidget {
   const OptionTwoPage({super.key});
@@ -23,7 +22,7 @@ class OptionTwoPage extends StatefulWidget {
 
 extension on DateTime {
   bool isAtLeast(DateTime other) {
-    return this.isAfter(other) || this.isAtSameMomentAs(other);
+    return isAfter(other) || isAtSameMomentAs(other);
   }
 }
 
@@ -72,9 +71,9 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
     for (var event in endedEvents) {
       double durationInMinutes =
           (int.tryParse(event.duration ?? '0') ?? 0).toDouble();
-      String taskName = event.taskTitle;
-      taskDurations.update(
-          taskName, (existingDuration) => existingDuration + durationInMinutes,
+      String calendarName = event.calendarName;
+      taskDurations.update(calendarName,
+          (existingDuration) => existingDuration + durationInMinutes,
           ifAbsent: () => durationInMinutes);
     }
   }
@@ -235,30 +234,26 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
 
     double screenWidth = MediaQuery.of(context).size.width;
     double baseWidth = screenWidth * 0.9;
-    double containerHeight = 60;
     const double uniformSpacing = 30.0;
 
     var longestTaskEntry = _taskWithLongestDuration();
 
     return Scaffold(
-        appBar: AppBar(title: const Text("Event Visualization")),
+        appBar: AppBar(title: const Text("My Events Report")),
         body: SingleChildScrollView(
           child: Column(
             children: [
-              Text(
-                "My Report",
-                style: TextStyle(
-                    fontSize: height * 0.03,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.contentColorPurple),
+              ElevatedButton(
+                onPressed: () {
+                  fetchEvents();
+                  fetchReasons();
+                },
+                child: const Text("Refresh Events"),
               ),
+              SizedBox(height: uniformSpacing),
               SegmentedControl(
                 height: height,
                 onValueChanged: _handleSegmentedControlChange,
-              ),
-              ElevatedButton(
-                onPressed: fetchEvents,
-                child: const Text("Refresh Events"),
               ),
               SizedBox(height: uniformSpacing),
               Container(
@@ -294,36 +289,9 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
                   });
                 },
                 child: longestTaskEntry != null
-                    ? Container(
-                        width: baseWidth,
-                        height: containerHeight,
-                        decoration: BoxDecoration(
-                          color: Colors.orangeAccent,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: EdgeInsets.symmetric(
-                            vertical: 8.0, horizontal: 16.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                "Task with the longest duration",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            Text(
-                              "${longestTaskEntry.key} (${longestTaskEntry.value.toStringAsFixed(2)} hrs)",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
+                    ? LongestTaskWidget(
+                        taskName: longestTaskEntry.key,
+                        duration: longestTaskEntry.value,
                       )
                     : Container(),
               ),

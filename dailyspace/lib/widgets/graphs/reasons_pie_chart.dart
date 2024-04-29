@@ -29,8 +29,24 @@ class _ReasonsPieChartState extends State<ReasonsPieChart> {
         .toList();
   }
 
+  List<Color> getGradientColors(int count) {
+    List<Color> colors = [];
+    Color startColor = Color.fromRGBO(218, 112, 214, 1);
+    Color endColor = Color.fromRGBO(138, 43, 226, 1);
+
+    for (int i = 0; i < count; i++) {
+      double ratio = i / (count - 1);
+      colors.add(Color.lerp(startColor, endColor, ratio)!);
+    }
+    return colors;
+  }
+
   @override
   Widget build(BuildContext context) {
+    var sortedEntries = widget.reasonCounts.entries.toList()
+      ..sort((a, b) => a.value.compareTo(b.value));
+    List<Color> gradientColors = getGradientColors(sortedEntries.length);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0),
       child: Card(
@@ -40,23 +56,27 @@ class _ReasonsPieChartState extends State<ReasonsPieChart> {
           children: [
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'Reasons Distribution',
-                style: Theme.of(context).textTheme.headline6,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Reasons Distribution',
+                  style: Theme.of(context).textTheme.headline6,
+                  textAlign: TextAlign.left,
+                ),
               ),
             ),
             Container(
+              width: 300,
               height: 200,
               child: PieChart(
                 PieChartData(
                   sectionsSpace: 0,
                   centerSpaceRadius: 40,
                   startDegreeOffset: -90,
-                  sections: widget.reasonCounts.entries.map((entry) {
+                  sections: List.generate(sortedEntries.length, (index) {
+                    var entry = sortedEntries[index];
                     return PieChartSectionData(
-                      color: Colors.primaries[
-                          widget.reasonCounts.keys.toList().indexOf(entry.key) %
-                              Colors.primaries.length],
+                      color: gradientColors[index],
                       value: entry.value.toDouble(),
                       title: '${entry.key} (${entry.value})',
                       radius: 50.0,
@@ -67,11 +87,10 @@ class _ReasonsPieChartState extends State<ReasonsPieChart> {
                       ),
                       titlePositionPercentageOffset: 0.55,
                     );
-                  }).toList(),
+                  }),
                 ),
               ),
             ),
-            // Add the information text below the PieChart for multiple common reasons
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: _mostCommonReasons.isNotEmpty
