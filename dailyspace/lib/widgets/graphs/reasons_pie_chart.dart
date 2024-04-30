@@ -31,8 +31,8 @@ class _ReasonsPieChartState extends State<ReasonsPieChart> {
 
   List<Color> getGradientColors(int count) {
     List<Color> colors = [];
-    Color startColor = Color.fromRGBO(218, 112, 214, 1);
-    Color endColor = Color.fromRGBO(138, 43, 226, 1);
+    Color startColor = Color.fromRGBO(255, 130, 251, 1);
+    Color endColor = Color.fromRGBO(152, 48, 250, 1);
 
     for (int i = 0; i < count; i++) {
       double ratio = i / (count - 1);

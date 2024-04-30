@@ -16,7 +16,7 @@ class LongestTaskWidget extends StatelessWidget {
       width: MediaQuery.of(context).size.width * 0.9,
       height: 60,
       decoration: BoxDecoration(
-        color: Color.fromARGB(255, 186, 147, 199),
+        color: Color.fromARGB(255, 197, 111, 255),
         borderRadius: BorderRadius.circular(12),
       ),
       padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),

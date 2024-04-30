@@ -18,7 +18,7 @@ class TaskCompletionWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Color.fromARGB(255, 166, 163, 219),
+        color: Color.fromARGB(255, 161, 157, 255),
         borderRadius: BorderRadius.circular(10),
         boxShadow: const [
           BoxShadow(
@@ -39,7 +39,7 @@ class TaskCompletionWidget extends StatelessWidget {
             TextSpan(
               text: '${completionPercentage.toStringAsFixed(1)}%',
               style: const TextStyle(
-                color: Color.fromARGB(255, 138, 25, 218),
+                color: Color.fromARGB(255, 162, 23, 255),
                 fontWeight: FontWeight.bold,
                 fontSize: 24, // Increase this value to adjust the font size
               ),

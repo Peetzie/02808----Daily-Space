@@ -23,7 +23,7 @@ class DelayAverageDurationWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Color.fromARGB(255, 154, 136, 214),
+        color: Color.fromARGB(255, 172, 147, 255),
         borderRadius: BorderRadius.circular(10),
       ),
       child: RichText(

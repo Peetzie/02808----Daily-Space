@@ -26,7 +26,7 @@ class DurationBarChart extends StatelessWidget {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Container(
-                width: taskDurations.length * 120.0, // 增加了容器的宽度
+                width: taskDurations.length * 60.0,
                 height: 200,
                 child: BarChart(
                   BarChartData(
@@ -94,7 +94,7 @@ class DurationBarChart extends StatelessWidget {
                             fromY: 0,
                             toY: entry.value,
                             color: isLongestTask
-                                ? Colors.red
+                                ? Color.fromARGB(255, 244, 54, 193)
                                 : Color.fromARGB(255, 239, 180, 250),
                           ),
                         ],
