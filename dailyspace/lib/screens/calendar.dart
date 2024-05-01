@@ -1,6 +1,5 @@
 import 'package:dailyspace/datastructures/taskinfo.dart';
 import 'package:flutter/material.dart';
-
 import 'package:intl/intl.dart';
 
 class Calendar extends StatelessWidget {
@@ -13,12 +12,12 @@ class Calendar extends StatelessWidget {
     final Map<String, TaskInfo> activities = availableActivities ?? {};
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Activities To Do'),
+      body: Padding(
+        padding: const EdgeInsets.only(top: 20),
+        child: activities.isEmpty
+            ? const Center(child: Text('No activities available'))
+            : buildActivitiesTimeline(activities),
       ),
-      body: activities.isEmpty
-          ? const Center(child: Text('No activities available'))
-          : buildActivitiesTimeline(activities),
     );
   }
 
@@ -31,8 +30,7 @@ class Calendar extends StatelessWidget {
           .toList();
 
       Widget timeLabel = Container(
-        padding: const EdgeInsets.symmetric(
-            vertical: 16), // Adjust the space for each hour
+        padding: const EdgeInsets.symmetric(vertical: 25),
         child: Text('${hour.toString().padLeft(2, '0')}:00'),
       );
 
@@ -52,10 +50,8 @@ class Calendar extends StatelessWidget {
       );
     }
 
-    // Wrap the ListView with Padding
     return Padding(
-      padding: const EdgeInsets.symmetric(
-          horizontal: 16.0), // Add horizontal padding
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: ListView(children: timelineTasks),
     );
   }

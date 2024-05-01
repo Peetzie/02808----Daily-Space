@@ -60,7 +60,11 @@ class _ReasonsPieChartState extends State<ReasonsPieChart> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Reasons Distribution',
-                  style: Theme.of(context).textTheme.headline6,
+                  style: TextStyle(
+                    fontSize: 20.0, // Similar size to headline6
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black, // Customize the color if needed
+                  ),
                   textAlign: TextAlign.left,
                 ),
               ),

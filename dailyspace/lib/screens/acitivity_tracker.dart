@@ -715,12 +715,20 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               String formattedDate = startedDateTime != null
                   ? DateFormat('yyyy-MM-dd – kk:mm').format(startedDateTime)
                   : 'Date not available';
-              return ListTile(
-                title: Text(event.taskTitle),
-                subtitle: Text('Started at $formattedDate'),
-                trailing: ElevatedButton(
-                  onPressed: () => _endEvent(event),
-                  child: Text('Finish'),
+              return Container(
+                decoration: BoxDecoration(
+                  color: getColorFromId(event
+                      .colorId), // Set background color based on the event's colorId
+                  borderRadius: BorderRadius.circular(5.0),
+                ),
+                margin: EdgeInsets.symmetric(vertical: 4.0),
+                child: ListTile(
+                  title: Text(event.taskTitle),
+                  subtitle: Text('Started at $formattedDate'),
+                  trailing: ElevatedButton(
+                    onPressed: () => _endEvent(event),
+                    child: Text('Finish'),
+                  ),
                 ),
               );
             },

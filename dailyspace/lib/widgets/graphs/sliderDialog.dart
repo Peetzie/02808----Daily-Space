@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
 class RangeSliderDialog {
-  static void show(BuildContext context) {
+  static void show(BuildContext context, double initialMax,
+      Function(double) onRangeSelected) {
+    RangeValues selectedRange = RangeValues(0, initialMax);
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        double initialValue = 50; // initial value for range slider
-        RangeValues selectedRange = const RangeValues(0, 100); // range for slider
         return AlertDialog(
           title: const Text('Select Range'),
           content: StatefulBuilder(
@@ -17,7 +18,7 @@ class RangeSliderDialog {
                   RangeSlider(
                     values: selectedRange,
                     min: 0,
-                    max: 100,
+                    max: initialMax,
                     onChanged: (RangeValues values) {
                       setState(() {
                         selectedRange = values;
@@ -35,15 +36,12 @@ class RangeSliderDialog {
           actions: <Widget>[
             ElevatedButton(
               child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
             ),
             ElevatedButton(
               child: const Text('Apply'),
               onPressed: () {
-                // Apply the selected range
-                // You can pass the selected range values to wherever needed
+                onRangeSelected(selectedRange.end);
                 Navigator.of(context).pop();
               },
             ),

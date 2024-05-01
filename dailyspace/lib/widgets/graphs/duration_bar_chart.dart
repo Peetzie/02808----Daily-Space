@@ -20,13 +20,17 @@ class DurationBarChart extends StatelessWidget {
           child: Column(children: [
             Text(
               'Task Durations',
-              style: Theme.of(context).textTheme.headline6,
+              style: TextStyle(
+                fontSize: 20.0,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
             ),
             SizedBox(height: 8),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Container(
-                width: taskDurations.length * 60.0,
+                width: taskDurations.length * 90.0,
                 height: 200,
                 child: BarChart(
                   BarChartData(

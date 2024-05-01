@@ -1,23 +1,39 @@
-import 'package:dailyspace/sources/app_colors.dart';
-import 'package:dailyspace/sources/palette.dart';
-import 'package:dailyspace/widgets/graphs/sliderDialog.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:tuple/tuple.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:dailyspace/sources/app_colors.dart';
+import 'package:dailyspace/widgets/graphs/sliderDialog.dart';
 
-class DelayBarChart extends StatelessWidget {
+class DelayBarChart extends StatefulWidget {
   final Map<Tuple2<String, String>, double> averageDelays;
-  final int overflowChars = 8;
-  double yMax = 100;
 
   DelayBarChart(this.averageDelays, {super.key});
 
   @override
+  _DelayBarChartState createState() => _DelayBarChartState();
+}
+
+class _DelayBarChartState extends State<DelayBarChart> {
+  late double yMax;
+
+  @override
+  void initState() {
+    super.initState();
+    yMax = widget.averageDelays.values
+        .fold(0, (prev, element) => element > prev ? element : prev);
+  }
+
+  void updateYMax(double newMax) {
+    setState(() {
+      yMax = newMax;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    double combinedAverageDelay =
+        computeAverageOfAverages(widget.averageDelays);
     String maxDurationCategory = findMaxDurationCategory();
-    double combinedAverageDelay = computeAverageOfAverages(averageDelays);
-    double height = MediaQuery.of(context).size.height * 0.25;
-    double width = MediaQuery.of(context).size.width * 0.8;
 
     return Column(
       children: [
@@ -30,132 +46,110 @@ class DelayBarChart extends StatelessWidget {
           children: [
             Container(
               alignment: Alignment.center,
+              height: 300,
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              margin: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: AppColors.contentColorPurple.withAlpha(30),
-                borderRadius: BorderRadius.circular(width * 0.03),
+                borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
                     spreadRadius: 3,
                     blurRadius: 7,
-                    offset: const Offset(0, 3), // changes position of shadow
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
-              padding: const EdgeInsets.all(10),
-              margin: const EdgeInsets.all(10),
-              child: Container(
-                alignment: Alignment.center,
-                height: 300,
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: BarChart(
-                  swapAnimationDuration:
-                      const Duration(milliseconds: 70), // Optional
-                  swapAnimationCurve: Curves.linear,
-                  BarChartData(
-                    extraLinesData: ExtraLinesData(horizontalLines: [
-                      HorizontalLine(
-                          y: combinedAverageDelay,
-                          label: HorizontalLineLabel(
-                            show: true,
-                            labelResolver: (line) =>
-                                'Avg: ${line.y.toStringAsFixed(1)} mins', // Customize label text
-                            style: TextStyle(
-                              color: AppColors.contentColorRed.withAlpha(90),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10,
-                            ),
-                          ),
+              child: BarChart(
+                swapAnimationDuration:
+                    const Duration(milliseconds: 70), // Optional
+                swapAnimationCurve: Curves.linear,
+                BarChartData(
+                  extraLinesData: ExtraLinesData(horizontalLines: [
+                    HorizontalLine(
+                      y: combinedAverageDelay,
+                      label: HorizontalLineLabel(
+                        show: true,
+                        labelResolver: (line) =>
+                            'Avg: ${line.y.toStringAsFixed(1)} mins',
+                        style: TextStyle(
                           color: AppColors.contentColorRed.withAlpha(90),
-                          strokeWidth: 2,
-                          dashArray: [5, 5])
-                    ]),
-                    alignment: BarChartAlignment.spaceAround,
-                    maxY: yMax,
-                    minY: -30,
-                    barTouchData: BarTouchData(
-                      enabled: true,
-                      touchTooltipData: BarTouchTooltipData(
-                        tooltipPadding: const EdgeInsets.all(8),
-                        tooltipMargin: 8,
-                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                          final key = averageDelays.keys.elementAt(groupIndex);
-                          final calendarName = key.item1;
-                          final colorId = key.item2;
-
-                          return BarTooltipItem(
-                            '$calendarName\n',
-                            const TextStyle(color: Colors.white),
-                            children: <TextSpan>[
-                              TextSpan(
-                                text: '${averageDelays[key]} mins',
-                                style: const TextStyle(
-                                  color: Colors.yellow,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                      ),
+                      color: AppColors.contentColorRed.withAlpha(90),
+                      strokeWidth: 2,
+                      dashArray: [5, 5],
+                    )
+                  ]),
+                  alignment: BarChartAlignment.spaceAround,
+                  maxY: yMax,
+                  minY: 0,
+                  barTouchData: BarTouchData(
+                    enabled: true,
+                    touchTooltipData: BarTouchTooltipData(
+                      tooltipPadding: const EdgeInsets.all(8),
+                      tooltipMargin: 8,
+                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                        final key =
+                            widget.averageDelays.keys.elementAt(groupIndex);
+                        return BarTooltipItem(
+                          '${key.item1}\n',
+                          const TextStyle(color: Colors.white),
+                          children: <TextSpan>[
+                            TextSpan(
+                              text: '${widget.averageDelays[key]} mins',
+                              style: const TextStyle(
+                                color: Colors.yellow,
+                                fontWeight: FontWeight.bold,
                               ),
-                            ],
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                  titlesData: FlTitlesData(
+                    show: true,
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 42,
+                        getTitlesWidget: (double value, TitleMeta meta) {
+                          final index = value.toInt();
+                          final key =
+                              widget.averageDelays.keys.elementAt(index);
+                          return SideTitleWidget(
+                            axisSide: meta.axisSide,
+                            space: 16.0,
+                            child: Text(
+                              key.item1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           );
                         },
                       ),
                     ),
-                    titlesData: FlTitlesData(
-                      show: true,
-                      bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 42,
-                          getTitlesWidget: (double value, TitleMeta meta) {
-                            final index = value.toInt();
-                            final key = averageDelays.keys.elementAt(index);
-                            final calendarName = key.item1;
-                            return SideTitleWidget(
-                              axisSide: meta.axisSide,
-                              space: 16.0,
-                              child: Text(
-                                calendarName.length > overflowChars
-                                    ? '${calendarName.substring(0, overflowChars)}...'
-                                    : calendarName,
-                                overflow: calendarName.length > overflowChars
-                                    ? TextOverflow.ellipsis
-                                    : TextOverflow.visible,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      leftTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                    ),
-                    gridData: FlGridData(
-                        show: true,
-                        checkToShowHorizontalLine: (value) => value % yMax == 0,
-                        getDrawingHorizontalLine: (value) {
-                          return const FlLine(
-                              color: Color.fromARGB(255, 46, 48, 52),
-                              strokeWidth: 1);
-                        }),
-                    borderData: FlBorderData(show: false),
-                    barGroups: averageDelays.keys.map((key) {
-                      final index = averageDelays.keys.toList().indexOf(key);
-                      final keysplit = averageDelays.keys.elementAt(index);
-                      final colorId = keysplit.item2;
-                      double yval = averageDelays[key] ?? 0;
-                      bool isOverflowing = yval > yMax;
-                      return BarChartGroupData(
-                        x: index,
-                        barRods: [
-                          BarChartRodData(
-                            toY: isOverflowing ? yMax : yval,
-                            color: getColorFromId(
-                                colorId), // Use colorMap to get color dynamically
-                            width: 4,
-                          ),
-                        ],
-                      );
-                    }).toList(),
                   ),
+                  gridData: FlGridData(
+                    show: true,
+                  ),
+                  borderData: FlBorderData(show: false),
+                  barGroups: widget.averageDelays.keys.map((key) {
+                    final yval = widget.averageDelays[key] ?? 0;
+                    return BarChartGroupData(
+                      x: widget.averageDelays.keys.toList().indexOf(key),
+                      barRods: [
+                        BarChartRodData(
+                          toY: yval > yMax ? yMax : yval,
+                          color: Colors.blue,
+                          width: 4,
+                        ),
+                      ],
+                    );
+                  }).toList(),
                 ),
               ),
             ),
@@ -165,7 +159,7 @@ class DelayBarChart extends StatelessWidget {
               child: IconButton(
                 icon: const Icon(Icons.settings, color: Colors.white),
                 onPressed: () {
-                  RangeSliderDialog.show(context);
+                  RangeSliderDialog.show(context, yMax, updateYMax);
                 },
               ),
             ),
@@ -183,7 +177,7 @@ class DelayBarChart extends StatelessWidget {
   String findMaxDurationCategory() {
     double maxDuration = 0.0;
     String maxCategory = '';
-    averageDelays.forEach((key, value) {
+    widget.averageDelays.forEach((key, value) {
       if (value > maxDuration) {
         maxDuration = value;
         maxCategory = key.item1;
@@ -195,7 +189,6 @@ class DelayBarChart extends StatelessWidget {
   double computeAverageOfAverages(
       Map<Tuple2<String, String>, double> averages) {
     if (averages.isEmpty) return 0.0;
-
     double sum = averages.values
         .fold(0.0, (previousSum, element) => previousSum + element);
     return sum / averages.length;

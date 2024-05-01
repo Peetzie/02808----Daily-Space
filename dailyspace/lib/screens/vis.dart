@@ -239,77 +239,88 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
     var longestTaskEntry = _taskWithLongestDuration();
 
     return Scaffold(
-        appBar: AppBar(title: const Text("My Events Report")),
         body: SingleChildScrollView(
-          child: Column(
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  fetchEvents();
-                  fetchReasons();
-                },
-                child: const Text("Refresh Events"),
+      child: Column(
+        children: [
+          SizedBox(height: 40),
+          Container(
+            alignment: Alignment.center,
+            padding: const EdgeInsets.all(20),
+            child: Text(
+              "My Events Report",
+              style: TextStyle(
+                color: Colors.purple, // Set the color to purple
+                fontSize: 24, // Optionally set the font size
+                fontWeight: FontWeight.bold,
               ),
-              SizedBox(height: uniformSpacing),
-              SegmentedControl(
-                height: height,
-                onValueChanged: _handleSegmentedControlChange,
-              ),
-              SizedBox(height: uniformSpacing),
-              Container(
-                width: baseWidth,
-                child: TaskCompletionWidget(
-                    totalTasks: allEvents.length,
-                    completedTasks: endedEvents.length),
-              ),
-              const SizedBox(height: uniformSpacing),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    showDelayBarChart = !showDelayBarChart;
-                  });
-                },
-                child: Container(
-                  width: baseWidth,
-                  child:
-                      DelayAverageDurationWidget(averageDelays: averageDelays),
-                ),
-              ),
-              const SizedBox(height: 10),
-              if (showDelayBarChart)
-                Container(
-                  width: baseWidth,
-                  child: DelayBarChart(averageDelays),
-                ),
-              const SizedBox(height: 20),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    showDurationBarChart = !showDurationBarChart;
-                  });
-                },
-                child: longestTaskEntry != null
-                    ? LongestTaskWidget(
-                        taskName: longestTaskEntry.key,
-                        duration: longestTaskEntry.value,
-                      )
-                    : Container(),
-              ),
-              if (showDurationBarChart)
-                Container(
-                  width: baseWidth,
-                  child: DurationBarChart(taskDurations),
-                ),
-              const SizedBox(height: 20),
-              Container(
-                width: baseWidth,
-                child: reasonCounts.isNotEmpty
-                    ? ReasonsPieChart(reasonCounts)
-                    : Text("No data available for reasons."),
-              ),
-              const SizedBox(height: 20),
-            ],
+            ),
           ),
-        ));
+          ElevatedButton(
+            onPressed: () {
+              fetchEvents();
+              fetchReasons();
+            },
+            child: const Text("Refresh Events"),
+          ),
+          SizedBox(height: uniformSpacing),
+          SegmentedControl(
+            height: height,
+            onValueChanged: _handleSegmentedControlChange,
+          ),
+          SizedBox(height: uniformSpacing),
+          Container(
+            width: baseWidth,
+            child: TaskCompletionWidget(
+                totalTasks: allEvents.length,
+                completedTasks: endedEvents.length),
+          ),
+          const SizedBox(height: uniformSpacing),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                showDelayBarChart = !showDelayBarChart;
+              });
+            },
+            child: Container(
+              width: baseWidth,
+              child: DelayAverageDurationWidget(averageDelays: averageDelays),
+            ),
+          ),
+          const SizedBox(height: 10),
+          if (showDelayBarChart)
+            Container(
+              width: baseWidth,
+              child: DelayBarChart(averageDelays),
+            ),
+          const SizedBox(height: 20),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                showDurationBarChart = !showDurationBarChart;
+              });
+            },
+            child: longestTaskEntry != null
+                ? LongestTaskWidget(
+                    taskName: longestTaskEntry.key,
+                    duration: longestTaskEntry.value,
+                  )
+                : Container(),
+          ),
+          if (showDurationBarChart)
+            Container(
+              width: baseWidth,
+              child: DurationBarChart(taskDurations),
+            ),
+          const SizedBox(height: 20),
+          Container(
+            width: baseWidth,
+            child: reasonCounts.isNotEmpty
+                ? ReasonsPieChart(reasonCounts)
+                : Text("No data available for reasons."),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    ));
   }
 }
