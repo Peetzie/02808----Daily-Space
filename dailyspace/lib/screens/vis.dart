@@ -255,13 +255,6 @@ class _OptionTwoPageState extends State<OptionTwoPage> {
               ),
             ),
           ),
-          ElevatedButton(
-            onPressed: () {
-              fetchEvents();
-              fetchReasons();
-            },
-            child: const Text("Refresh Events"),
-          ),
           SizedBox(height: uniformSpacing),
           SegmentedControl(
             height: height,

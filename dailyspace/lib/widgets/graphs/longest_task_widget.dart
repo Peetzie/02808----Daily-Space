@@ -25,7 +25,7 @@ class LongestTaskWidget extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              "Task with the longest duration",
+              "Task with the longest duration: $taskName", // Added task name to the text
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -33,13 +33,18 @@ class LongestTaskWidget extends StatelessWidget {
             ),
           ),
           Text(
-            "${duration.toStringAsFixed(2)} hrs",
+            "${duration.toStringAsFixed(2)} hrs", // Correctly formatted duration display
             style: TextStyle(
               color: Color.fromARGB(255, 138, 25, 218),
               fontWeight: FontWeight.bold,
               fontSize: 20,
             ),
           ),
+          Icon(
+            Icons.arrow_downward,
+            color: Colors.white,
+            size: 24,
+          ), // Added a missing parenthesis to close Icon widget
         ],
       ),
     );

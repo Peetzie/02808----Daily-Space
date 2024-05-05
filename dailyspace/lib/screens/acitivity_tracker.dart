@@ -104,9 +104,9 @@ class _ActivityTrackerState extends State<ActivityTracker> {
         tasks.values.forEach((task) {
           TaskInfo newTask = TaskInfo(task['taskId'], task['calendarName'],
               task['title'], task['start'], task['end'], task['colorId']);
-
-          DateTime taskStart;
-          int difference;
+          if (endedFirebaseTasksIds.contains(newTask.taskId)) {
+            return;
+          }
 
           // Check if the task is already active or ended, skip if it is
           if (!firebaseTasks.containsKey(task['taskId']) &&
@@ -138,6 +138,39 @@ class _ActivityTrackerState extends State<ActivityTracker> {
             availableActivities[delayedTask.taskId] = newTask;
           }
         });
+
+        // Convert set to list and sort
+        List<TaskInfo> sortedEarlyStartActivities =
+            earlyStartActivities.toList();
+        sortedEarlyStartActivities.sort((a, b) {
+          DateTime? startTimeA =
+              a.start != null ? DateTime.parse(a.start!) : null;
+          DateTime? startTimeB =
+              b.start != null ? DateTime.parse(b.start!) : null;
+          return (startTimeA ?? DateTime(1900))
+              .compareTo(startTimeB ?? DateTime(1900));
+        });
+        earlyStartActivities = sortedEarlyStartActivities.toSet();
+
+        // Sort availableActivities by start time
+        List<TaskInfo> sortedAvailableActivities =
+            availableActivities.values.toList();
+        sortedAvailableActivities.sort((a, b) {
+          DateTime? startTimeA =
+              a.start != null ? DateTime.parse(a.start!) : null;
+          DateTime? startTimeB =
+              b.start != null ? DateTime.parse(b.start!) : null;
+          return (startTimeA ?? DateTime(1900))
+              .compareTo(startTimeB ?? DateTime(1900));
+        });
+        availableActivities = {
+          for (var item in sortedAvailableActivities) item.taskId: item
+        };
+
+        earlyStartActivities
+            .removeWhere((task) => endedFirebaseTasksIds.contains(task.taskId));
+        availableActivities.removeWhere(
+            (string, key) => endedFirebaseTasksIds.contains(string));
         earlyStartActivities.removeWhere(
             (task) => availableActivities.containsKey(task.taskId));
         Provider.of<ActivityManager>(context, listen: false)
@@ -232,6 +265,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
       if (result != null) {
         setState(() {
           selectedCalendars = result as Set<String>;
+          _fetchActivities();
         });
       }
     });
@@ -648,7 +682,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                             }
                           }
                         : null,
-                    child: Text('Later'),
+                    child: Text('Postpone '),
                   ),
                 ],
               ),
