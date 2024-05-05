@@ -15,12 +15,14 @@ class DelayBarChart extends StatefulWidget {
 
 class _DelayBarChartState extends State<DelayBarChart> {
   late double yMax;
+  late double initialMax;
 
   @override
   void initState() {
     super.initState();
     yMax = widget.averageDelays.values
         .fold(0, (prev, element) => element > prev ? element : prev);
+    initialMax = yMax;
   }
 
   void updateYMax(double newMax) {
@@ -159,7 +161,7 @@ class _DelayBarChartState extends State<DelayBarChart> {
               child: IconButton(
                 icon: const Icon(Icons.settings, color: Colors.white),
                 onPressed: () {
-                  RangeSliderDialog.show(context, yMax, updateYMax);
+                  RangeSliderDialog.show(context, initialMax, updateYMax, yMax);
                 },
               ),
             ),

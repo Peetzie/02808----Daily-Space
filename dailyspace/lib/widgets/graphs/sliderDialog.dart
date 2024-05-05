@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 class RangeSliderDialog {
   static void show(BuildContext context, double initialMax,
-      Function(double) onRangeSelected) {
-    RangeValues selectedRange = RangeValues(0, initialMax);
+      Function(double) onRangeSelected, double currentMax) {
+    RangeValues selectedRange = RangeValues(0, currentMax);
+    double maxLimit = initialMax;
 
     showDialog(
       context: context,
@@ -18,15 +19,19 @@ class RangeSliderDialog {
                   RangeSlider(
                     values: selectedRange,
                     min: 0,
-                    max: initialMax,
+                    max: maxLimit,
+                    divisions: maxLimit.toInt(),
                     onChanged: (RangeValues values) {
                       setState(() {
-                        selectedRange = values;
+                        selectedRange = RangeValues(
+                          values.start.round().toDouble(),
+                          values.end.round().toDouble(),
+                        );
                       });
                     },
                   ),
                   Text(
-                    'Selected Range: ${selectedRange.start} - ${selectedRange.end}',
+                    'Selected Range: ${selectedRange.start.round()} - ${selectedRange.end.round()}',
                     style: const TextStyle(fontSize: 16),
                   ),
                 ],
@@ -34,11 +39,11 @@ class RangeSliderDialog {
             },
           ),
           actions: <Widget>[
-            ElevatedButton(
+            TextButton(
               child: const Text('Cancel'),
               onPressed: () => Navigator.of(context).pop(),
             ),
-            ElevatedButton(
+            TextButton(
               child: const Text('Apply'),
               onPressed: () {
                 onRangeSelected(selectedRange.end);
