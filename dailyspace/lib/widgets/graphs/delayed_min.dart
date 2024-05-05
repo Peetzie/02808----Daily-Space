@@ -1,4 +1,3 @@
-import 'package:dailyspace/sources/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:tuple/tuple.dart';
 
@@ -26,36 +25,45 @@ class DelayAverageDurationWidget extends StatelessWidget {
         color: Color.fromARGB(255, 172, 147, 255),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: RichText(
-        text: TextSpan(
-          text: 'Task start delayed by an average of   ',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Roboto',
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                text: 'Task start delayed by an average of   ',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Roboto',
+                ),
+                children: <TextSpan>[
+                  TextSpan(
+                    text: '$roundedAverage',
+                    style: const TextStyle(
+                      color: Color.fromARGB(255, 138, 25, 218),
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Roboto',
+                    ),
+                  ),
+                  const TextSpan(
+                    text: ' min',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Roboto',
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          children: <TextSpan>[
-            TextSpan(
-              text: '$roundedAverage',
-              style: const TextStyle(
-                color: Color.fromARGB(255, 138, 25, 218),
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Roboto',
-              ),
-            ),
-            const TextSpan(
-              text: '   min',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Roboto',
-              ),
-            ),
-          ],
-        ),
+          Icon(Icons.arrow_downward,
+              color: Colors.white, size: 24) // Adding the down arrow icon
+        ],
       ),
     );
   }

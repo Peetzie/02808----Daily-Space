@@ -261,6 +261,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
       if (result != null) {
         setState(() {
           selectedCalendars = result as Set<String>;
+          _fetchActivities();
         });
       }
     });
@@ -677,7 +678,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                             }
                           }
                         : null,
-                    child: Text('Later'),
+                    child: Text('Postpone '),
                   ),
                 ],
               ),
