@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 
 Future<Map<String, dynamic>?> reasonDialog(BuildContext context) async {
   FirebaseManager firebaseManager = FirebaseManager();
-  List<String> reasons = await firebaseManager.fetchReasons();
+  Set<String> reasons = Set<String>.from(await firebaseManager.fetchReasons());
 
   String? selectedReason;
   Duration? selectedDelay;

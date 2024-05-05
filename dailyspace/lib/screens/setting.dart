@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:dailyspace/datastructures/calendar_manager.dart';
+import 'package:dailyspace/datastructures/data_manager.dart';
 import 'package:dailyspace/main.dart';
 import 'package:dailyspace/widgets/activity_tracker/calendar_overlay.dart';
 import 'package:flutter/cupertino.dart';
@@ -10,7 +11,9 @@ import 'package:dailyspace/services/google_sign_in_manager.dart';
 
 class SettingsPage2 extends StatefulWidget {
   final CalendarManager calendarManager;
-  const SettingsPage2({Key? key, required this.calendarManager})
+  final DataManager dataManager;
+  const SettingsPage2(
+      {Key? key, required this.calendarManager, required this.dataManager})
       : super(key: key);
 
   @override
@@ -20,12 +23,14 @@ class SettingsPage2 extends StatefulWidget {
 class _SettingsPage2State extends State<SettingsPage2> {
   bool _isDark = false;
   late CalendarManager calendarManager;
+  late DataManager dataManager;
 
   @override
   @override
   void initState() {
     super.initState();
     calendarManager = widget.calendarManager;
+    dataManager = widget.dataManager;
   }
 
   void _signOut() async {
@@ -33,7 +38,10 @@ class _SettingsPage2State extends State<SettingsPage2> {
     // Navigate back to the login screen
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-          builder: (context) => MainScreen(calendarManager: calendarManager)),
+          builder: (context) => MainScreen(
+                calendarManager: calendarManager,
+                dataManager: dataManager,
+              )),
     );
   }
 
@@ -83,29 +91,24 @@ class _SettingsPage2State extends State<SettingsPage2> {
                 ),
                 const Divider(),
                 _SingleSection(
-                  title: "Organization",
+                  title: "Data",
                   children: [
                     _CustomListTile(
-                      title: "Profile",
-                      icon: Icons.person_outline_rounded,
+                      title: "Manage Calendars",
+                      icon: Icons.calendar_today_outlined,
                       onTap: _openCalendarOverlay,
                     ),
                     _CustomListTile(
-                      title: "History",
-                      icon: Icons.history,
+                      title: "Refresh",
+                      icon: Icons.cloud_sync,
+                      onTap: () async {
+                        await dataManager.fetchAndStoreActivities(
+                            GoogleSignInManager.instance.currentUser);
+                      },
                     ),
                   ],
                 ),
                 const Divider(),
-                _SingleSection(
-                  children: [
-                    _CustomListTile(
-                      title: "Sign out",
-                      icon: Icons.exit_to_app_rounded,
-                      onTap: _signOut,
-                    ),
-                  ],
-                ),
               ],
             ),
           ),

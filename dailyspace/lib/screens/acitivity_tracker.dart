@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'dart:async';
 import 'package:dailyspace/datastructures/calendar_manager.dart';
+import 'package:dailyspace/datastructures/data_manager.dart';
 import 'package:dailyspace/datastructures/firebase_event.dart';
 import 'package:dailyspace/datastructures/taskinfo.dart';
 import 'package:dailyspace/services/firebase_handler.dart';
@@ -22,7 +23,9 @@ import 'package:dailyspace/widgets/activity_tracker/activity_manager.dart';
 
 class ActivityTracker extends StatefulWidget {
   final CalendarManager calendarManager;
-  const ActivityTracker({Key? key, required this.calendarManager})
+  final dataManager;
+  const ActivityTracker(
+      {Key? key, required this.calendarManager, required this.dataManager})
       : super(key: key);
 
   @override
@@ -34,19 +37,15 @@ final FirebaseManager firebaseManager = FirebaseManager();
 class _ActivityTrackerState extends State<ActivityTracker> {
   GoogleSignInAccount? account;
   late CalendarManager calendarManager;
-  late Map<String, TaskInfo> availableActivities;
-  late Set<FirebaseEvent> activeActivities;
+  late DataManager dataManager;
+
   Timer? _timer;
-  late Set<TaskInfo> earlyStartActivities;
-  Set<String> selectedTaskIds = Set<String>();
 
   @override
   void initState() {
     super.initState();
     calendarManager = widget.calendarManager;
-    availableActivities = {};
-    activeActivities = {};
-    earlyStartActivities = {};
+    dataManager = widget.dataManager;
     _initAccountAndFetchData();
 
     // Update datetime every second
@@ -59,8 +58,11 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     account = GoogleSignInManager.instance.currentUser;
     account ??= await GoogleSignInManager.instance.signIn();
     if (account != null) {
-      await _fetchActivities(); // Now call _fetchActivities() after _fetchAndLogCalendars() finishes
-      _fetchActiveEvents();
+      await dataManager.fetchAndStoreActivities(
+          account); // Now call _fetchActivities() after _fetchAndLogCalendars() finishes
+      log("activity test" + dataManager.activeActivities.toString());
+      log("Testing");
+      log(dataManager.availableActivities.toString());
     } else {
       // Handle the scenario where sign-in failed or was declined
       debugPrint("Google sign-in failed or was declined by the user.");
@@ -71,143 +73,6 @@ class _ActivityTrackerState extends State<ActivityTracker> {
   void dispose() {
     _timer?.cancel();
     super.dispose();
-  }
-
-  Future<void> _fetchActivities() async {
-    try {
-      availableActivities.clear();
-      earlyStartActivities.clear();
-      // Fetch active tasks from Firebase
-      Map<String, FirebaseEvent> firebaseTasks =
-          await firebaseManager.fetchActiveEvents();
-      Set<String> endedFirebaseTasksIds =
-          await firebaseManager.fetchAllEndedEventIds();
-      Map<String, FirebaseEvent> firebaseDelayedTasks =
-          await firebaseManager.fetchDelayedEvents();
-      final tasks = await GoogleServices.fetchTasksFromCalendar(
-          account, calendarManager.selectedCalendars);
-      log(tasks.toString());
-      final now = DateTime.now();
-
-      setState(() {
-        tasks.values.forEach((task) {
-          TaskInfo newTask = TaskInfo(task['taskId'], task['calendarName'],
-              task['title'], task['start'], task['end'], task['colorId']);
-          if (endedFirebaseTasksIds.contains(newTask.taskId)) {
-            return;
-          }
-
-          // Check if the task is already active or ended, skip if it is
-          if (!firebaseTasks.containsKey(task['taskId']) &&
-              !endedFirebaseTasksIds.contains(task['taskId'])) {
-            handleTaskTiming(task, now, newTask);
-          }
-        });
-
-        // Handle delayed tasks
-        firebaseDelayedTasks.values.forEach((delayedTask) {
-          TaskInfo newTask = TaskInfo(
-              delayedTask.taskId,
-              delayedTask.calendarName,
-              delayedTask.taskTitle,
-              delayedTask.delay?.last,
-              delayedTask.endTime,
-              delayedTask.colorId);
-          DateTime taskStart = DateTime.parse(delayedTask.delay!.last);
-          int difference = now.difference(taskStart).inMinutes;
-
-          if (DateFormat('yyyy-MM-dd').format(taskStart) ==
-              DateFormat('yyyy-MM-dd').format(now)) {
-            if (difference.abs() <= 30) {
-              earlyStartActivities.add(newTask);
-            } else {
-              availableActivities[delayedTask.taskId] = newTask;
-            }
-          } else {
-            availableActivities[delayedTask.taskId] = newTask;
-          }
-        });
-
-        // Convert set to list and sort
-        List<TaskInfo> sortedEarlyStartActivities =
-            earlyStartActivities.toList();
-        sortedEarlyStartActivities.sort((a, b) {
-          DateTime? startTimeA =
-              a.start != null ? DateTime.parse(a.start!) : null;
-          DateTime? startTimeB =
-              b.start != null ? DateTime.parse(b.start!) : null;
-          return (startTimeA ?? DateTime(1900))
-              .compareTo(startTimeB ?? DateTime(1900));
-        });
-        earlyStartActivities = sortedEarlyStartActivities.toSet();
-
-        // Sort availableActivities by start time
-        List<TaskInfo> sortedAvailableActivities =
-            availableActivities.values.toList();
-        sortedAvailableActivities.sort((a, b) {
-          DateTime? startTimeA =
-              a.start != null ? DateTime.parse(a.start!) : null;
-          DateTime? startTimeB =
-              b.start != null ? DateTime.parse(b.start!) : null;
-          return (startTimeA ?? DateTime(1900))
-              .compareTo(startTimeB ?? DateTime(1900));
-        });
-        availableActivities = {
-          for (var item in sortedAvailableActivities) item.taskId: item
-        };
-
-        earlyStartActivities
-            .removeWhere((task) => endedFirebaseTasksIds.contains(task.taskId));
-        availableActivities.removeWhere(
-            (string, key) => endedFirebaseTasksIds.contains(string));
-        earlyStartActivities.removeWhere(
-            (task) => availableActivities.containsKey(task.taskId));
-        Provider.of<ActivityManager>(context, listen: false)
-            .setAvailableActivities(availableActivities);
-        log("Updated lists of activities based on current statuses.");
-      });
-    } catch (e) {
-      log("Error fetching tasks: ${e.toString()}");
-    }
-  }
-
-  void handleTaskTiming(
-      Map<String, dynamic> task, DateTime now, TaskInfo newTask) {
-    DateTime taskStart;
-    int difference;
-    if (task['start'].contains("T")) {
-      // Time-specific task start
-      taskStart = DateTime.parse(task['start']);
-      difference = taskStart.difference(now).inMinutes;
-    } else {
-      // Full-day or date-only event
-      try {
-        taskStart = DateFormat('yyyy-MM-dd').parse(task['start']);
-        difference = now.difference(taskStart).inMinutes;
-      } catch (e) {
-        log("Error parsing date-only start: ${e.toString()}");
-        return; // Skip this iteration on parse error
-      }
-
-      // Special handling for full-day tasks that start today
-      if (DateFormat('yyyy-MM-dd').format(taskStart) ==
-          DateFormat('yyyy-MM-dd').format(now)) {
-        earlyStartActivities.add(newTask);
-        return; // Add to start today and skip further checks
-      }
-    }
-
-    // Regular checks for tasks with specific times
-    if (DateFormat('yyyy-MM-dd').format(taskStart) ==
-        DateFormat('yyyy-MM-dd').format(now)) {
-      if (difference.abs() <= 30) {
-        earlyStartActivities.add(newTask);
-      } else {
-        availableActivities[task['taskId']] = newTask;
-      }
-    } else {
-      availableActivities[task['taskId']] = newTask;
-    }
   }
 
   @override
@@ -222,7 +87,6 @@ class _ActivityTrackerState extends State<ActivityTracker> {
       decoration: const BoxDecoration(color: Color(0xFFFFFFFF)),
       child: Column(
         children: [
-          _buildAppBar(),
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -238,44 +102,6 @@ class _ActivityTrackerState extends State<ActivityTracker> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildAppBar() {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      leading: Builder(
-        builder: (BuildContext context) {
-          return IconButton(
-            icon: const Icon(Icons.menu, color: Colors.black),
-            onPressed: () {
-              Scaffold.of(context).openDrawer();
-            },
-          );
-        },
-      ),
-      actions: [
-        IconButton(
-          onPressed: () async {
-            log("Resyncing");
-            await _fetchActivities();
-          },
-          tooltip: "Sync with Google",
-          icon: const Icon(Icons.sync),
-          color: Colors.black,
-        ),
-        IconButton(
-          onPressed: () async {
-            await GoogleSignInManager.instance.signOut();
-            // Navigate back to login screen
-            Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => const LoginScreen()));
-          },
-          icon: const Icon(Icons.logout),
-          color: Colors.black,
-        )
-      ],
     );
   }
 
@@ -304,7 +130,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               ),
               SizedBox(width: MediaQuery.of(context).size.width * 0.03),
               Text(
-                _getFormattedDate(),
+                TimeFormatter.getFormattedDate(),
                 style: TextStyle(
                   fontSize: MediaQuery.of(context).size.width * 0.018,
                   fontWeight: FontWeight.normal,
@@ -318,9 +144,10 @@ class _ActivityTrackerState extends State<ActivityTracker> {
           child: Container(
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: availableActivities.length,
+              itemCount: dataManager.availableActivities.length,
               itemBuilder: (context, index) {
-                final task = availableActivities.values.elementAt(index);
+                final task =
+                    dataManager.availableActivities.values.elementAt(index);
 
                 return _buildTaskContainer(task);
               },
@@ -329,12 +156,6 @@ class _ActivityTrackerState extends State<ActivityTracker> {
         ),
       ],
     );
-  }
-
-  String _getFormattedDate() {
-    DateTime now = DateTime.now();
-    DateFormat dateFormat = DateFormat('EEEE, dd/MM HH:mm:ss');
-    return dateFormat.format(now);
   }
 
   Widget _buildTaskContainer(TaskInfo task) {
@@ -453,13 +274,13 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     return DragTarget<TaskInfo>(
       onAccept: (TaskInfo task) {
         setState(() {
-          earlyStartActivities.add(task);
-          availableActivities.remove(task.taskId);
+          dataManager.earlyStartActivities.add(task);
+          dataManager.availableActivities.remove(task.taskId);
         });
       },
       builder: (context, candidateData, rejectedData) {
-        bool areButtonsEnabled = selectedTaskIds.isNotEmpty;
-        bool laterEnabled = (selectedTaskIds.length == 1);
+        bool areButtonsEnabled = dataManager.selectedTaskIds.isNotEmpty;
+        bool laterEnabled = (dataManager.selectedTaskIds.length == 1);
         return Container(
           height: height,
           width: width,
@@ -495,21 +316,23 @@ class _ActivityTrackerState extends State<ActivityTracker> {
               ),
               SizedBox(height: height * 0.02),
               Expanded(
-                child: earlyStartActivities.isEmpty
+                child: dataManager.earlyStartActivities.isEmpty
                     ? Center(child: Text("No tasks are about to start."))
                     : ListView.builder(
-                        itemCount: earlyStartActivities.length,
+                        itemCount: dataManager.earlyStartActivities.length,
                         itemBuilder: (context, index) {
-                          final task = earlyStartActivities.elementAt(index);
+                          final task =
+                              dataManager.earlyStartActivities.elementAt(index);
                           bool isSelected =
-                              selectedTaskIds.contains(task.taskId);
+                              dataManager.selectedTaskIds.contains(task.taskId);
                           return InkWell(
                             onTap: () {
                               setState(() {
                                 if (isSelected) {
-                                  selectedTaskIds.remove(task.taskId);
+                                  dataManager.selectedTaskIds
+                                      .remove(task.taskId);
                                 } else {
-                                  selectedTaskIds.add(task.taskId);
+                                  dataManager.selectedTaskIds.add(task.taskId);
                                 }
                               });
                             },
@@ -542,7 +365,8 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                                       ),
                                     ),
                                     Text(
-                                      calculateDuration(task.start, task.end),
+                                      TimeFormatter.calculateDurationString(
+                                          task.start, task.end),
                                       style: TextStyle(
                                           color: Colors.black,
                                           fontSize: width * 0.04),
@@ -564,8 +388,9 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                     onPressed: areButtonsEnabled
                         ? () {
                             setState(() {
-                              earlyStartActivities.forEach((task) {
-                                if (selectedTaskIds.contains(task.taskId)) {
+                              dataManager.earlyStartActivities.forEach((task) {
+                                if (dataManager.selectedTaskIds
+                                    .contains(task.taskId)) {
                                   DateTime now = DateTime.now();
                                   String formattedTimeStampWithTimeZone =
                                       DateFormat("yyyy-MM-ddTHH:mm:ss").format(
@@ -586,12 +411,13 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                                           null,
                                           null);
                                   firebaseManager.addFirebaseEvent(event);
-                                  activeActivities.add(event);
+                                  dataManager.activeActivities.add(event);
                                 }
                               });
-                              earlyStartActivities.removeWhere((task) =>
-                                  selectedTaskIds.contains(task.taskId));
-                              selectedTaskIds.clear();
+                              dataManager.earlyStartActivities.removeWhere(
+                                  (task) => dataManager.selectedTaskIds
+                                      .contains(task.taskId));
+                              dataManager.selectedTaskIds.clear();
                             });
                           }
                         : null,
@@ -608,11 +434,13 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                                       delayResult['delay']);
 
                               // only one can be selected so we can use first element of selected as identifier.
-                              if (selectedTaskIds.isNotEmpty) {
+                              if (dataManager.selectedTaskIds.isNotEmpty) {
                                 log(reason);
-                                String selectedTaskId = selectedTaskIds.first;
-                                TaskInfo selectedTask =
-                                    earlyStartActivities.firstWhere((task) =>
+                                String selectedTaskId =
+                                    dataManager.selectedTaskIds.first;
+                                TaskInfo selectedTask = dataManager
+                                    .earlyStartActivities
+                                    .firstWhere((task) =>
                                         task.taskId == selectedTaskId);
                                 if (selectedTask != null) {
                                   FirebaseEvent? existingEvent =
@@ -636,7 +464,8 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                                             null, null, null, reasons, delays);
                                     firebaseManager
                                         .addDelayedEvent(newDelayedEvent);
-                                    earlyStartActivities.remove(selectedTaskId);
+                                    dataManager.earlyStartActivities
+                                        .remove(selectedTaskId);
                                     ;
                                   }
                                 }
@@ -653,27 +482,6 @@ class _ActivityTrackerState extends State<ActivityTracker> {
         );
       },
     );
-  }
-
-  void _endEvent(FirebaseEvent event) async {
-    try {
-      await firebaseManager.endEvent(event.taskId.toString());
-      _fetchActiveEvents();
-    } catch (e) {
-      debugPrint('Error ending event: ${e.toString()}');
-    }
-  }
-
-  void _fetchActiveEvents() async {
-    try {
-      var activeEventsMap = await firebaseManager.fetchActiveEvents();
-      var activeEvents = activeEventsMap.values.toSet();
-      setState(() {
-        activeActivities = activeEvents;
-      });
-    } catch (e) {
-      debugPrint('Error fetching active events: ${e.toString()}');
-    }
   }
 
   Widget _buildWaitingToFinish() {
@@ -703,9 +511,10 @@ class _ActivityTrackerState extends State<ActivityTracker> {
           // Only display this task if activeActivities is not empty
           Expanded(
               child: ListView.builder(
-            itemCount: activeActivities.length,
+            itemCount: dataManager.activeActivities.length,
             itemBuilder: (context, index) {
-              FirebaseEvent event = activeActivities.elementAt(index);
+              FirebaseEvent event =
+                  dataManager.activeActivities.elementAt(index);
               DateTime? startedDateTime =
                   DateTime.tryParse(event.startedAt ?? '');
               String formattedDate = startedDateTime != null
@@ -722,14 +531,14 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                   title: Text(event.taskTitle),
                   subtitle: Text('Started at $formattedDate'),
                   trailing: ElevatedButton(
-                    onPressed: () => _endEvent(event),
+                    onPressed: () => dataManager.endEvent(event),
                     child: Text('Finish'),
                   ),
                 ),
               );
             },
           )),
-          if (activeActivities.isEmpty) ...[
+          if (dataManager.activeActivities.isEmpty) ...[
             SizedBox(height: containerWidth * 0.05),
             Container(
               alignment: Alignment.center,
@@ -744,15 +553,5 @@ class _ActivityTrackerState extends State<ActivityTracker> {
         ],
       ),
     );
-  }
-
-  String calculateDuration(String? start, String? end) {
-    if (start == null || end == null) {
-      return 'Duration Unknown';
-    }
-    DateTime startTime = DateTime.parse(start);
-    DateTime endTime = DateTime.parse(end);
-    Duration duration = endTime.difference(startTime);
-    return "${duration.inHours}h ${duration.inMinutes % 60}m";
   }
 }

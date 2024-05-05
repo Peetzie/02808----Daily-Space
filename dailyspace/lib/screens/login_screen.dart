@@ -1,5 +1,6 @@
 import 'package:auth_buttons/auth_buttons.dart';
 import 'package:dailyspace/datastructures/calendar_manager.dart';
+import 'package:dailyspace/datastructures/data_manager.dart';
 import 'package:dailyspace/main.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -32,6 +33,8 @@ class LoginScreen extends StatelessWidget {
 
   Future<void> _signInWithGoogle(BuildContext context) async {
     CalendarManager calendarManager = CalendarManager();
+
+    DataManager dataManager = DataManager(calendarManager: calendarManager);
     log('Attempting Google Sign-In');
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn();
@@ -59,8 +62,10 @@ class LoginScreen extends StatelessWidget {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-                builder: (context) =>
-                    MainScreen(calendarManager: calendarManager)),
+                builder: (context) => MainScreen(
+                      calendarManager: calendarManager,
+                      dataManager: dataManager,
+                    )),
           );
         } else {
           log('Failed to sign in with Google: No user in Firebase');

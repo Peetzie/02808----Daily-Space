@@ -1,4 +1,5 @@
 import 'package:dailyspace/datastructures/calendar_manager.dart';
+import 'package:dailyspace/datastructures/data_manager.dart';
 import 'package:dailyspace/screens/acitivity_tracker.dart';
 import 'package:dailyspace/screens/calendar.dart';
 import 'package:dailyspace/screens/setting.dart';
@@ -27,8 +28,10 @@ void main() async {
   Widget initialScreen;
   if (account != null) {
     CalendarManager calendarManager = CalendarManager();
+    DataManager dataManager = DataManager(calendarManager: calendarManager);
     await calendarManager.fetchCalendars(account);
-    initialScreen = MainScreen(calendarManager: calendarManager);
+    initialScreen =
+        MainScreen(calendarManager: calendarManager, dataManager: dataManager);
   } else {
     initialScreen = const LoginScreen();
   }
@@ -51,19 +54,24 @@ class MyApp extends StatelessWidget {
 
 class MainScreen extends StatefulWidget {
   final CalendarManager calendarManager;
-  const MainScreen({Key? key, required this.calendarManager}) : super(key: key);
+  final DataManager dataManager;
+  const MainScreen(
+      {Key? key, required this.calendarManager, required this.dataManager})
+      : super(key: key);
   @override
   _MainScreenState createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
   late CalendarManager calendarManager;
+  late DataManager dataManager;
   int _selectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
     calendarManager = widget.calendarManager;
+    dataManager = widget.dataManager;
   }
 
   @override
@@ -76,13 +84,19 @@ class _MainScreenState extends State<MainScreen> {
         body: IndexedStack(
           index: _selectedIndex,
           children: <Widget>[
-            ActivityTracker(calendarManager: widget.calendarManager),
+            ActivityTracker(
+              calendarManager: widget.calendarManager,
+              dataManager: widget.dataManager,
+            ),
             Consumer<ActivityManager>(
               builder: (context, manager, child) =>
                   Calendar(availableActivities: manager.availableActivities),
             ),
             const OptionTwoPage(),
-            SettingsPage2(calendarManager: widget.calendarManager),
+            SettingsPage2(
+              calendarManager: widget.calendarManager,
+              dataManager: widget.dataManager,
+            ),
           ],
         ),
         bottomNavigationBar: BottomNavigationBar(

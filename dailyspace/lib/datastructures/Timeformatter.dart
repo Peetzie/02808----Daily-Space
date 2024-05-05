@@ -17,6 +17,16 @@ class TimeFormatter {
     return "";
   }
 
+  String calculateDuration(String? start, String? end) {
+    if (start == null || end == null) {
+      return 'Duration Unknown';
+    }
+    DateTime startTime = DateTime.parse(start);
+    DateTime endTime = DateTime.parse(end);
+    Duration duration = endTime.difference(startTime);
+    return "${duration.inHours}h ${duration.inMinutes % 60}m";
+  }
+
   static String convertDurationToISO8601(Duration duration) {
     // Get the current date and time
     DateTime now = DateTime.now();
@@ -46,9 +56,20 @@ class TimeFormatter {
     return differenceInMinutes;
   }
 
-  static String? calculateDuration(DateTime? startedAt, DateTime? endedAt) {
-    if (startedAt == null || endedAt == null) return null;
-    return endedAt.difference(startedAt).toString();
+  static String getFormattedDate() {
+    DateTime now = DateTime.now();
+    DateFormat dateFormat = DateFormat('EEEE, dd/MM HH:mm:ss');
+    return dateFormat.format(now);
+  }
+
+  static String calculateDurationString(String? start, String? end) {
+    if (start == null || end == null) {
+      return 'Duration Unknown';
+    }
+    DateTime startTime = DateTime.parse(start);
+    DateTime endTime = DateTime.parse(end);
+    Duration duration = endTime.difference(startTime);
+    return "${duration.inHours}h ${duration.inMinutes % 60}m";
   }
 
   static String getCurrentTimestamp() {
