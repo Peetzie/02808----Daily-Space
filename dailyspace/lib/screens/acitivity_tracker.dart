@@ -138,6 +138,35 @@ class _ActivityTrackerState extends State<ActivityTracker> {
             availableActivities[delayedTask.taskId] = newTask;
           }
         });
+
+        // Convert set to list and sort
+        List<TaskInfo> sortedEarlyStartActivities =
+            earlyStartActivities.toList();
+        sortedEarlyStartActivities.sort((a, b) {
+          DateTime? startTimeA =
+              a.start != null ? DateTime.parse(a.start!) : null;
+          DateTime? startTimeB =
+              b.start != null ? DateTime.parse(b.start!) : null;
+          return (startTimeA ?? DateTime(1900))
+              .compareTo(startTimeB ?? DateTime(1900));
+        });
+        earlyStartActivities = sortedEarlyStartActivities.toSet();
+
+        // Sort availableActivities by start time
+        List<TaskInfo> sortedAvailableActivities =
+            availableActivities.values.toList();
+        sortedAvailableActivities.sort((a, b) {
+          DateTime? startTimeA =
+              a.start != null ? DateTime.parse(a.start!) : null;
+          DateTime? startTimeB =
+              b.start != null ? DateTime.parse(b.start!) : null;
+          return (startTimeA ?? DateTime(1900))
+              .compareTo(startTimeB ?? DateTime(1900));
+        });
+        availableActivities = {
+          for (var item in sortedAvailableActivities) item.taskId: item
+        };
+
         earlyStartActivities.removeWhere(
             (task) => availableActivities.containsKey(task.taskId));
         Provider.of<ActivityManager>(context, listen: false)
