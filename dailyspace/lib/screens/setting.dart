@@ -1,11 +1,17 @@
+import 'dart:developer';
+
+import 'package:dailyspace/datastructures/calendar_manager.dart';
 import 'package:dailyspace/main.dart';
+import 'package:dailyspace/widgets/activity_tracker/calendar_overlay.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:dailyspace/screens/login_screen.dart';
 import 'package:dailyspace/services/google_sign_in_manager.dart';
 
 class SettingsPage2 extends StatefulWidget {
-  const SettingsPage2({super.key});
+  final CalendarManager calendarManager;
+  const SettingsPage2({Key? key, required this.calendarManager})
+      : super(key: key);
 
   @override
   State<SettingsPage2> createState() => _SettingsPage2State();
@@ -13,13 +19,43 @@ class SettingsPage2 extends StatefulWidget {
 
 class _SettingsPage2State extends State<SettingsPage2> {
   bool _isDark = false;
+  late CalendarManager calendarManager;
+
+  @override
+  @override
+  void initState() {
+    super.initState();
+    calendarManager = widget.calendarManager;
+  }
 
   void _signOut() async {
     await GoogleSignInManager.instance.signOut();
     // Navigate back to the login screen
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => MainScreen()),
+      MaterialPageRoute(
+          builder: (context) => MainScreen(calendarManager: calendarManager)),
     );
+  }
+
+  void _openCalendarOverlay() {
+    log("calendars from overlay main" +
+        calendarManager.availableCalendars.toString());
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return CalendarOverlayDialog(
+          availableCalendars: calendarManager.availableCalendars,
+          selectedCalendars: calendarManager.selectedCalendars,
+        );
+      },
+    ).then((result) {
+      if (result != null) {
+        setState(() {
+          // selectedCalendars = result as Set<String>;
+          //_fetchActivities();
+        });
+      }
+    });
   }
 
   @override
@@ -48,10 +84,11 @@ class _SettingsPage2State extends State<SettingsPage2> {
                 const Divider(),
                 _SingleSection(
                   title: "Organization",
-                  children: const [
+                  children: [
                     _CustomListTile(
                       title: "Profile",
                       icon: Icons.person_outline_rounded,
+                      onTap: _openCalendarOverlay,
                     ),
                     _CustomListTile(
                       title: "History",

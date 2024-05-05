@@ -1,14 +1,13 @@
-import 'dart:developer';
 import 'package:auth_buttons/auth_buttons.dart';
-import 'package:dailyspace/screens/acitivity_tracker.dart';
-import 'package:dailyspace/services/firebase_handler.dart';
-import 'package:dailyspace/services/google_sign_in_manager.dart';
+import 'package:dailyspace/datastructures/calendar_manager.dart';
+import 'package:dailyspace/main.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'dart:developer';
 
 class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +22,6 @@ class LoginScreen extends StatelessWidget {
             GoogleAuthButton(
               onPressed: () {
                 _signInWithGoogle(context);
-                // _testCase(context);
               },
             ),
           ],
@@ -33,10 +31,10 @@ class LoginScreen extends StatelessWidget {
   }
 
   Future<void> _signInWithGoogle(BuildContext context) async {
+    CalendarManager calendarManager = CalendarManager();
     log('Attempting Google Sign-In');
     try {
-      final GoogleSignIn googleSignIn =
-          GoogleSignInManager.instance.googleSignIn;
+      final GoogleSignIn googleSignIn = GoogleSignIn();
       final GoogleSignInAccount? googleSignInAccount =
           await googleSignIn.signIn();
 
@@ -56,14 +54,13 @@ class LoginScreen extends StatelessWidget {
 
         if (user != null) {
           log('Signed in with Google: ${user.uid}');
-          FirebaseManager firebaseManager = FirebaseManager();
-          await firebaseManager.addUser().catchError((error) {
-            log("Failed to add user to Firestore: $error");
-          });
+          await calendarManager.fetchCalendars(googleSignInAccount);
 
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const ActivityTracker()),
+            MaterialPageRoute(
+                builder: (context) =>
+                    MainScreen(calendarManager: calendarManager)),
           );
         } else {
           log('Failed to sign in with Google: No user in Firebase');

@@ -1,3 +1,8 @@
+import 'package:dailyspace/datastructures/calendar_manager.dart';
+import 'package:dailyspace/screens/acitivity_tracker.dart';
+import 'package:dailyspace/screens/calendar.dart';
+import 'package:dailyspace/screens/setting.dart';
+import 'package:dailyspace/screens/vis.dart';
 import 'package:dailyspace/services/google_sign_in_manager.dart';
 import 'package:dailyspace/widgets/activity_tracker/activity_manager.dart';
 import 'package:flutter/material.dart';
@@ -5,14 +10,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'screens/acitivity_tracker.dart';
-import 'screens/vis.dart';
-import 'screens/setting.dart';
-import 'screens/calendar.dart';
 import 'dart:developer';
 import 'package:auth_buttons/auth_buttons.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
+import 'screens/login_screen.dart'; // Importing the LoginScreen file
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,7 +26,9 @@ void main() async {
 
   Widget initialScreen;
   if (account != null) {
-    initialScreen = const MainScreen();
+    CalendarManager calendarManager = CalendarManager();
+    await calendarManager.fetchCalendars(account);
+    initialScreen = MainScreen(calendarManager: calendarManager);
   } else {
     initialScreen = const LoginScreen();
   }
@@ -45,116 +49,40 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            GoogleAuthButton(
-              onPressed: () {
-                _signInWithGoogle(context);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _signInWithGoogle(BuildContext context) async {
-    log('Attempting Google Sign-In');
-    try {
-      final GoogleSignIn googleSignIn =
-          GoogleSignInManager.instance.googleSignIn;
-      final GoogleSignInAccount? googleSignInAccount =
-          await googleSignIn.signIn();
-
-      if (googleSignInAccount != null) {
-        final GoogleSignInAuthentication googleSignInAuthentication =
-            await googleSignInAccount.authentication;
-
-        final AuthCredential credential = GoogleAuthProvider.credential(
-          accessToken: googleSignInAuthentication.accessToken,
-          idToken: googleSignInAuthentication.idToken,
-        );
-
-        // Use the credentials to sign in with Firebase
-        final UserCredential userCredential =
-            await FirebaseAuth.instance.signInWithCredential(credential);
-        final User? user = userCredential.user;
-
-        if (user != null) {
-          log('Signed in with Google: ${user.uid}');
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const MainScreen()),
-          );
-        } else {
-          log('Failed to sign in with Google: No user in Firebase');
-        }
-      } else {
-        log('Google sign-in aborted by user');
-      }
-    } catch (error) {
-      log('Error signing in with Google: $error');
-    }
-  }
-
-  Future<void> addUser(String name, String email, int age) {
-    FirebaseFirestore firestore = FirebaseFirestore.instance;
-    User? user = FirebaseAuth.instance.currentUser;
-
-    if (user != null) {
-      DocumentReference userDoc = firestore.collection('users').doc(user.uid);
-
-      return userDoc
-          .set({
-            'name': name,
-            'email': email,
-            'age': age,
-          })
-          .then((value) => log("User added successfully!"))
-          .catchError((error) => log("Failed to add user: $error"));
-    } else {
-      log("User is not authenticated");
-      throw Exception('User is not authenticated');
-    }
-  }
-}
-
 class MainScreen extends StatefulWidget {
-  const MainScreen({Key? key}) : super(key: key);
-
+  final CalendarManager calendarManager;
+  const MainScreen({Key? key, required this.calendarManager}) : super(key: key);
   @override
   _MainScreenState createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
+  late CalendarManager calendarManager;
   int _selectedIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    calendarManager = widget.calendarManager;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    log("initial mainscreen calendars " +
+        calendarManager.availableCalendars.toString());
     return ChangeNotifierProvider<ActivityManager>(
       create: (_) => ActivityManager(),
       child: Scaffold(
         body: IndexedStack(
           index: _selectedIndex,
           children: <Widget>[
-            const ActivityTracker(),
+            ActivityTracker(calendarManager: widget.calendarManager),
             Consumer<ActivityManager>(
               builder: (context, manager, child) =>
                   Calendar(availableActivities: manager.availableActivities),
             ),
             const OptionTwoPage(),
-            const SettingsPage2(),
+            SettingsPage2(calendarManager: widget.calendarManager),
           ],
         ),
         bottomNavigationBar: BottomNavigationBar(
@@ -198,3 +126,6 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
+
+// Add the SettingsPage2 widget definition here
+

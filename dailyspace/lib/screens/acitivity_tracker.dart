@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'dart:async';
+import 'package:dailyspace/datastructures/calendar_manager.dart';
 import 'package:dailyspace/datastructures/firebase_event.dart';
 import 'package:dailyspace/datastructures/taskinfo.dart';
 import 'package:dailyspace/services/firebase_handler.dart';
@@ -20,7 +21,9 @@ import 'package:provider/provider.dart';
 import 'package:dailyspace/widgets/activity_tracker/activity_manager.dart';
 
 class ActivityTracker extends StatefulWidget {
-  const ActivityTracker({Key? key}) : super(key: key);
+  final CalendarManager calendarManager;
+  const ActivityTracker({Key? key, required this.calendarManager})
+      : super(key: key);
 
   @override
   _ActivityTrackerState createState() => _ActivityTrackerState();
@@ -30,21 +33,19 @@ final FirebaseManager firebaseManager = FirebaseManager();
 
 class _ActivityTrackerState extends State<ActivityTracker> {
   GoogleSignInAccount? account;
+  late CalendarManager calendarManager;
   late Map<String, TaskInfo> availableActivities;
   late Set<FirebaseEvent> activeActivities;
   Timer? _timer;
   late Set<TaskInfo> earlyStartActivities;
   Set<String> selectedTaskIds = Set<String>();
 
-  late List<String> availableCalendars;
-  Set<String> selectedCalendars = {};
-
   @override
   void initState() {
     super.initState();
+    calendarManager = widget.calendarManager;
     availableActivities = {};
     activeActivities = {};
-    availableCalendars = [];
     earlyStartActivities = {};
     _initAccountAndFetchData();
 
@@ -58,8 +59,6 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     account = GoogleSignInManager.instance.currentUser;
     account ??= await GoogleSignInManager.instance.signIn();
     if (account != null) {
-      await _fetchCalendars();
-      await _fetchAndLogCalendars(); // Wait for _fetchAndLogCalendars() to complete
       await _fetchActivities(); // Now call _fetchActivities() after _fetchAndLogCalendars() finishes
       _fetchActiveEvents();
     } else {
@@ -74,16 +73,6 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     super.dispose();
   }
 
-  Future<void> _fetchCalendars() async {
-    availableCalendars.clear();
-    final calendars = await GoogleServices.fetchCalendars(account);
-    setState(() {
-      calendars.forEach((title, value) {
-        availableCalendars.add(title);
-      });
-    });
-  }
-
   Future<void> _fetchActivities() async {
     try {
       availableActivities.clear();
@@ -96,7 +85,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
       Map<String, FirebaseEvent> firebaseDelayedTasks =
           await firebaseManager.fetchDelayedEvents();
       final tasks = await GoogleServices.fetchTasksFromCalendar(
-          account, selectedCalendars);
+          account, calendarManager.selectedCalendars);
       log(tasks.toString());
       final now = DateTime.now();
 
@@ -252,25 +241,6 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     );
   }
 
-  void _openCalendarOverlay() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return CalendarOverlayDialog(
-          availableCalendars: availableCalendars,
-          selectedCalendars: selectedCalendars,
-        );
-      },
-    ).then((result) {
-      if (result != null) {
-        setState(() {
-          selectedCalendars = result as Set<String>;
-          _fetchActivities();
-        });
-      }
-    });
-  }
-
   Widget _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.transparent,
@@ -286,14 +256,6 @@ class _ActivityTrackerState extends State<ActivityTracker> {
         },
       ),
       actions: [
-        IconButton(
-          onPressed: () async {
-            _openCalendarOverlay();
-          },
-          icon: const Icon(Icons.calendar_month),
-          color: Colors.black,
-          tooltip: "Choose calendars to fetch events from",
-        ),
         IconButton(
           onPressed: () async {
             log("Resyncing");
@@ -792,14 +754,5 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     DateTime endTime = DateTime.parse(end);
     Duration duration = endTime.difference(startTime);
     return "${duration.inHours}h ${duration.inMinutes % 60}m";
-  }
-
-  Future<void> _fetchAndLogCalendars() async {
-    try {
-      selectedCalendars = await FirebaseManager().fetchSelectedCalendars();
-      // Now `selectedCalendars` is populated with the fetched data
-    } catch (e) {
-      log("Error fetching calendars: $e");
-    }
   }
 }
