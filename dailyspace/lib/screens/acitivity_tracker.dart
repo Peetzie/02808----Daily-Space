@@ -13,11 +13,13 @@ import 'package:dailyspace/screens/vis.dart';
 import 'package:dailyspace/widgets/activity_tracker/add_calendar.dart';
 import 'package:dailyspace/widgets/activity_tracker/calendar_overlay.dart';
 import 'package:dailyspace/widgets/activity_tracker/reason_dialog.dart';
+import 'package:dailyspace/widgets/loading_snackbar.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:dailyspace/datastructures/Timeformatter.dart';
 import 'package:intl/intl.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:dailyspace/widgets/activity_tracker/activity_manager.dart';
 
@@ -35,6 +37,15 @@ class ActivityTracker extends StatefulWidget {
 final FirebaseManager firebaseManager = FirebaseManager();
 
 class _ActivityTrackerState extends State<ActivityTracker> {
+  void _showSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: Duration(seconds: 2), // Adjust the duration as needed
+      ),
+    );
+  }
+
   GoogleSignInAccount? account;
   late CalendarManager calendarManager;
   late DataManager dataManager;
@@ -58,11 +69,14 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     account = GoogleSignInManager.instance.currentUser;
     account ??= await GoogleSignInManager.instance.signIn();
     if (account != null) {
+      showLoadingSnackbar(context);
       await dataManager.fetchAndStoreActivities(
           account); // Now call _fetchActivities() after _fetchAndLogCalendars() finishes
       log("activity test" + dataManager.activeActivities.toString());
       log("Testing");
       log(dataManager.availableActivities.toString());
+      // Dismiss loading snackbar
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
     } else {
       // Handle the scenario where sign-in failed or was declined
       debugPrint("Google sign-in failed or was declined by the user.");
@@ -418,6 +432,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                                   (task) => dataManager.selectedTaskIds
                                       .contains(task.taskId));
                               dataManager.selectedTaskIds.clear();
+                              _showSnackbar("Task started successfully");
                             });
                           }
                         : null,
@@ -453,6 +468,8 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                                     // updatie existing event
                                     await firebaseManager.updateDelayedEvent(
                                         selectedTaskId, existingEvent);
+                                    _showSnackbar(
+                                        "Successfully postponed event");
                                   } else {
                                     List<String> reasons = [];
                                     List<String> delays = [];
@@ -464,9 +481,11 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                                             null, null, null, reasons, delays);
                                     firebaseManager
                                         .addDelayedEvent(newDelayedEvent);
+
                                     dataManager.earlyStartActivities
                                         .remove(selectedTaskId);
-                                    ;
+                                    _showSnackbar(
+                                        "Successfully postponed event");
                                   }
                                 }
                               }
@@ -531,7 +550,10 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                   title: Text(event.taskTitle),
                   subtitle: Text('Started at $formattedDate'),
                   trailing: ElevatedButton(
-                    onPressed: () => dataManager.endEvent(event),
+                    onPressed: () {
+                      dataManager.endEvent(event);
+                      _showSnackbar("Task finished successfully");
+                    },
                     child: Text('Finish'),
                   ),
                 ),

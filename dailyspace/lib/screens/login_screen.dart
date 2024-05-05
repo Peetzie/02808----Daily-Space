@@ -33,6 +33,7 @@ class LoginScreen extends StatelessWidget {
 
   Future<void> _signInWithGoogle(BuildContext context) async {
     CalendarManager calendarManager = CalendarManager();
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     DataManager dataManager = DataManager(calendarManager: calendarManager);
     log('Attempting Google Sign-In');
@@ -57,8 +58,11 @@ class LoginScreen extends StatelessWidget {
 
         if (user != null) {
           log('Signed in with Google: ${user.uid}');
-          await calendarManager.fetchCalendars(googleSignInAccount);
 
+          scaffoldMessenger.showSnackBar(
+            SnackBar(content: Text('Successfully signed in with Google')),
+          );
+          await calendarManager.fetchCalendars(googleSignInAccount);
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -68,12 +72,21 @@ class LoginScreen extends StatelessWidget {
                     )),
           );
         } else {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(content: Text('Failed to sign in with Google')),
+          );
           log('Failed to sign in with Google: No user in Firebase');
         }
       } else {
         log('Google sign-in aborted by user');
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('Google sign-in aborted by user')),
+        );
       }
     } catch (error) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Error signing in with Google')),
+      );
       log('Error signing in with Google: $error');
     }
   }

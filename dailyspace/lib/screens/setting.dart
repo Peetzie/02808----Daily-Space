@@ -4,6 +4,7 @@ import 'package:dailyspace/datastructures/calendar_manager.dart';
 import 'package:dailyspace/datastructures/data_manager.dart';
 import 'package:dailyspace/main.dart';
 import 'package:dailyspace/widgets/activity_tracker/calendar_overlay.dart';
+import 'package:dailyspace/widgets/loading_snackbar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:dailyspace/screens/login_screen.dart';
@@ -102,8 +103,10 @@ class _SettingsPage2State extends State<SettingsPage2> {
                       title: "Refresh",
                       icon: Icons.cloud_sync,
                       onTap: () async {
+                        showLoadingSnackbar(context);
                         await dataManager.fetchAndStoreActivities(
                             GoogleSignInManager.instance.currentUser);
+                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
                       },
                     ),
                   ],

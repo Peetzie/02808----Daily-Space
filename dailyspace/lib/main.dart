@@ -131,7 +131,8 @@ class _MainScreenState extends State<MainScreen> {
             ),
           ],
           currentIndex: _selectedIndex,
-          selectedItemColor: Color.fromARGB(255, 186, 126, 243),
+          selectedItemColor:
+              Colors.purple, // Change the selected item color to purple
           onTap: (index) {
             setState(() => _selectedIndex = index);
           },

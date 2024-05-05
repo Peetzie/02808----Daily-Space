@@ -51,6 +51,7 @@ dependencies:
   tuple: ^2.0.2
   http: any
   numberpicker: ^2.1.2
+  loading_animation_widget: ^1.2.1
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: false

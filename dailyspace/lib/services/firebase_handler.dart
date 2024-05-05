@@ -4,6 +4,8 @@ import 'package:dailyspace/sources/default_reasons.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dailyspace/datastructures/firebase_event.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class FirebaseManager {
