@@ -19,23 +19,34 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const MyApp());
+
+  GoogleSignInAccount? account = GoogleSignInManager.instance.currentUser;
+
+  Widget initialScreen;
+  if (account != null) {
+    initialScreen = const MainScreen();
+  } else {
+    initialScreen = const LoginScreen();
+  }
+  runApp(MyApp(initialScreen: initialScreen));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final Widget initialScreen;
+
+  const MyApp({Key? key, required this.initialScreen}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: LoginScreen(),
+      home: initialScreen,
     );
   }
 }
 
 class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +61,6 @@ class LoginScreen extends StatelessWidget {
             GoogleAuthButton(
               onPressed: () {
                 _signInWithGoogle(context);
-                // _testCase(context);
               },
             ),
           ],
@@ -83,7 +93,6 @@ class LoginScreen extends StatelessWidget {
 
         if (user != null) {
           log('Signed in with Google: ${user.uid}');
-          addUser("test", "test@gmail.com", 21); // Example call
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const MainScreen()),
@@ -122,7 +131,7 @@ class LoginScreen extends StatelessWidget {
 }
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  const MainScreen({Key? key}) : super(key: key);
 
   @override
   _MainScreenState createState() => _MainScreenState();

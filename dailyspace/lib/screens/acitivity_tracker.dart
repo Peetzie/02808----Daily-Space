@@ -104,9 +104,9 @@ class _ActivityTrackerState extends State<ActivityTracker> {
         tasks.values.forEach((task) {
           TaskInfo newTask = TaskInfo(task['taskId'], task['calendarName'],
               task['title'], task['start'], task['end'], task['colorId']);
-
-          DateTime taskStart;
-          int difference;
+          if (endedFirebaseTasksIds.contains(newTask.taskId)) {
+            return;
+          }
 
           // Check if the task is already active or ended, skip if it is
           if (!firebaseTasks.containsKey(task['taskId']) &&
@@ -167,6 +167,10 @@ class _ActivityTrackerState extends State<ActivityTracker> {
           for (var item in sortedAvailableActivities) item.taskId: item
         };
 
+        earlyStartActivities
+            .removeWhere((task) => endedFirebaseTasksIds.contains(task.taskId));
+        availableActivities.removeWhere(
+            (string, key) => endedFirebaseTasksIds.contains(string));
         earlyStartActivities.removeWhere(
             (task) => availableActivities.containsKey(task.taskId));
         Provider.of<ActivityManager>(context, listen: false)
