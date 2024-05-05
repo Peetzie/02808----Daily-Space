@@ -143,7 +143,7 @@ class _AddCalendarOverlayState extends State<AddCalendarOverlay> {
     for (var entry in selectedCalendarsWithColors.entries) {
       Map<String, int> calendarInfo = {};
       calendarInfo[entry.key] = entry.value;
-      await GoogleServices.createCalendar(account, calendarInfo);
+      await GoogleServices.createAndUpdateCalendar(account, calendarInfo, true);
       completed++;
       setState(() {
         _progress = completed / total;

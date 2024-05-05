@@ -27,8 +27,8 @@ class GoogleServices {
     }
   }
 
-  static Future<void> createCalendar(
-      GoogleSignInAccount? account, Map<String, int> calendarData) async {
+  static Future<void> createAndUpdateCalendar(GoogleSignInAccount? account,
+      Map<String, int> calendarData, bool colorRgbFormat) async {
     if (account != null) {
       final authHeaders = await account.authHeaders;
       final googleHttpClient = GoogleHttpClient(authHeaders);
@@ -39,8 +39,7 @@ class GoogleServices {
         final colorId = entry.value;
 
         final url = Uri.parse(baseUrl);
-        final requestBody = {'summary': name, 'colorId': colorId.toString()};
-
+        final requestBody = {'summary': name};
         final response = await googleHttpClient.post(
           url,
           body: json.encode(requestBody),
@@ -48,7 +47,31 @@ class GoogleServices {
         );
 
         if (response.statusCode == 200) {
-          print("Calendar '$name' created successfully with colorId: $colorId");
+          print("Calendar '$name' created successfully.");
+          final data = json.decode(response.body);
+          final calendarId = data['id']; // Extracting calendar ID from response
+
+          // Prepare to update the color
+          final updateUrl = Uri.parse(
+              'https://www.googleapis.com/calendar/v3/users/me/calendarList/$calendarId');
+          final updateBody = json.encode({
+            'colorId': colorId.toString(),
+            'colorRgbFormat':
+                colorRgbFormat // Indicating whether color ID is in RGB format
+          });
+
+          final updateResponse = await googleHttpClient.put(
+            updateUrl,
+            body: updateBody,
+            headers: {'Content-Type': 'application/json'},
+          );
+
+          if (updateResponse.statusCode == 200) {
+            print("Calendar color updated successfully for '$name'.");
+          } else {
+            print(
+                "Failed to update calendar color for '$name'. Status code: ${updateResponse.statusCode}");
+          }
         } else {
           print(
               "Failed to create calendar '$name'. Status code: ${response.statusCode}");
