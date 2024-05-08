@@ -475,6 +475,13 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                                         selectedTaskId, existingEvent);
                                     _showSnackbar(
                                         "Successfully postponed event");
+                                    setState(() {
+                                      dataManager.earlyStartActivities
+                                          .removeWhere((task) =>
+                                              task.taskId == selectedTaskId);
+                                      dataManager.selectedTaskIds
+                                          .remove(selectedTaskId);
+                                    });
                                   } else {
                                     List<String> reasons = [];
                                     List<String> delays = [];
@@ -487,8 +494,13 @@ class _ActivityTrackerState extends State<ActivityTracker> {
                                     firebaseManager
                                         .addDelayedEvent(newDelayedEvent);
 
-                                    dataManager.earlyStartActivities
-                                        .remove(selectedTaskId);
+                                    setState(() {
+                                      dataManager.earlyStartActivities
+                                          .removeWhere((task) =>
+                                              task.taskId == selectedTaskId);
+                                      dataManager.selectedTaskIds
+                                          .remove(selectedTaskId);
+                                    });
                                     _showSnackbar(
                                         "Successfully postponed event");
                                   }
