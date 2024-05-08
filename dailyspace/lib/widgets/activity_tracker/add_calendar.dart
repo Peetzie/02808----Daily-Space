@@ -1,3 +1,8 @@
+/*
+  Created by: 
+  - Frederik Peetz-Schou Larsen
+  As part of course 02808 at DTU 2024. 
+*/
 import 'package:dailyspace/services/google_services.dart';
 import 'package:dailyspace/services/google_sign_in_manager.dart';
 import 'package:dailyspace/sources/palette.dart';

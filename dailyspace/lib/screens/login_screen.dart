@@ -1,3 +1,9 @@
+
+/*
+  Created by: 
+  - Frederik Peetz-Schou Larsen
+  As part of course 02808 at DTU 2024. 
+*/
 import 'package:auth_buttons/auth_buttons.dart';
 import 'package:dailyspace/datastructures/calendar_manager.dart';
 import 'package:dailyspace/datastructures/data_manager.dart';

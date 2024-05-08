@@ -1,3 +1,8 @@
+/*
+  Created by: 
+  - Frederik Peetz-Schou Larsen
+  As part of course 02808 at DTU 2024. 
+*/
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dailyspace/sources/default_reasons.dart';

@@ -1,3 +1,10 @@
+/*
+  Created by: 
+  - Frederik Peetz-Schou Larsen (90%)
+  - Zheng Dong (20%)
+  As part of course 02808 at DTU 2024. 
+*/
+
 import 'dart:developer';
 
 import 'package:dailyspace/datastructures/calendar_manager.dart';

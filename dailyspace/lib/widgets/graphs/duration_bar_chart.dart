@@ -1,3 +1,8 @@
+/*
+  Created by: 
+  - Zheng Dong
+  As part of course 02808 at DTU 2024. 
+*/
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 

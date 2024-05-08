@@ -1,3 +1,8 @@
+/*
+  Created by: 
+  - Frederik Peetz-Schou Larsen
+  As part of course 02808 at DTU 2024. 
+*/
 import 'dart:developer';
 
 import 'package:dailyspace/services/firebase_handler.dart';

@@ -1,3 +1,10 @@
+/*
+  Created by: 
+  - Frederik Peetz-Schou Larsen 50%
+  - Zheng Dong 50%
+  As part of course 02808 at DTU 2024. 
+*/
+
 import 'dart:developer' as dev;
 import 'package:dailyspace/datastructures/TimePeriod.dart';
 import 'package:dailyspace/datastructures/Timeformatter.dart';

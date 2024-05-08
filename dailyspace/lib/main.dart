@@ -1,3 +1,10 @@
+
+/*
+  Created by: 
+  - Zheng Dong
+  - Frederik Peetz-Schou Larsen
+  As part of course 02808 at DTU 2024. 
+*/
 import 'package:dailyspace/datastructures/calendar_manager.dart';
 import 'package:dailyspace/datastructures/data_manager.dart';
 import 'package:dailyspace/screens/acitivity_tracker.dart';

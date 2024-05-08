@@ -1,3 +1,9 @@
+/*
+  Created by: 
+  - Frederik Peetz-Schou Larsen (90%)
+  - Zheng Dong (10%)
+*/
+
 import 'dart:developer';
 import 'dart:async';
 import 'package:dailyspace/datastructures/calendar_manager.dart';

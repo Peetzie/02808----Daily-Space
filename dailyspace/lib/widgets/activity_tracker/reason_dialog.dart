@@ -1,3 +1,8 @@
+/*
+  Created by: 
+  - Frederik Peetz-Schou Larsen
+  As part of course 02808 at DTU 2024. 
+*/
 import 'package:dailyspace/datastructures/firebase_event.dart';
 import 'package:dailyspace/services/firebase_handler.dart';
 import 'package:dailyspace/widgets/activity_tracker/delay_timer.dart';
