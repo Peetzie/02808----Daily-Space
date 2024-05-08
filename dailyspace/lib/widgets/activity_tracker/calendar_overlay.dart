@@ -32,7 +32,7 @@ class _CalendarOverlayDialogState extends State<CalendarOverlayDialog> {
           Text(
             'Select Calendar(s)',
             style:
-                TextStyle(fontSize: width * 0.06, fontWeight: FontWeight.bold),
+                TextStyle(fontSize: width * 0.05, fontWeight: FontWeight.bold),
           ),
           IconButton(
             icon: const Icon(Icons.download),

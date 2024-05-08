@@ -75,6 +75,9 @@ class _ActivityTrackerState extends State<ActivityTracker> {
       log("activity test" + dataManager.activeActivities.toString());
       log("Testing");
       log(dataManager.availableActivities.toString());
+      Provider.of<ActivityManager>(context, listen: false)
+          .setAvailableActivities(dataManager.availableActivities);
+      log("List of available activities fetched on reload: ${dataManager.availableActivities}");
       // Dismiss loading snackbar
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
     } else {
@@ -125,6 +128,8 @@ class _ActivityTrackerState extends State<ActivityTracker> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        SizedBox(
+            height: MediaQuery.of(context).size.height * 0.08), // Add this line
         Padding(
           padding: EdgeInsets.symmetric(
             horizontal: MediaQuery.of(context).size.width * 0.08,
@@ -225,7 +230,7 @@ class _ActivityTrackerState extends State<ActivityTracker> {
         height: MediaQuery.of(context).size.width * 0.23,
         width: MediaQuery.of(context).size.width * 0.23,
         margin: EdgeInsets.symmetric(
-          horizontal: MediaQuery.of(context).size.width * 0.02,
+          horizontal: MediaQuery.of(context).size.width * 0.04,
         ),
         decoration: BoxDecoration(
           color: getColorFromId(task.colorId),
