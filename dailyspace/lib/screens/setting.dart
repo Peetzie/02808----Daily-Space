@@ -1,8 +1,21 @@
+import 'dart:developer';
+
+import 'package:dailyspace/datastructures/calendar_manager.dart';
+import 'package:dailyspace/datastructures/data_manager.dart';
+import 'package:dailyspace/main.dart';
+import 'package:dailyspace/widgets/activity_tracker/calendar_overlay.dart';
+import 'package:dailyspace/widgets/loading_snackbar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:dailyspace/screens/login_screen.dart';
+import 'package:dailyspace/services/google_sign_in_manager.dart';
 
 class SettingsPage2 extends StatefulWidget {
-  const SettingsPage2({Key? key}) : super(key: key);
+  final CalendarManager calendarManager;
+  final DataManager dataManager;
+  const SettingsPage2(
+      {Key? key, required this.calendarManager, required this.dataManager})
+      : super(key: key);
 
   @override
   State<SettingsPage2> createState() => _SettingsPage2State();
@@ -10,10 +23,54 @@ class SettingsPage2 extends StatefulWidget {
 
 class _SettingsPage2State extends State<SettingsPage2> {
   bool _isDark = false;
+  late CalendarManager calendarManager;
+  late DataManager dataManager;
+
+  @override
+  @override
+  void initState() {
+    super.initState();
+    calendarManager = widget.calendarManager;
+    dataManager = widget.dataManager;
+  }
+
+  void _signOut() async {
+    await GoogleSignInManager.instance.signOut();
+    // Navigate back to the login screen
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+          builder: (context) => MainScreen(
+                calendarManager: calendarManager,
+                dataManager: dataManager,
+              )),
+    );
+  }
+
+  void _openCalendarOverlay() {
+    log("calendars from overlay main" +
+        calendarManager.availableCalendars.toString());
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return CalendarOverlayDialog(
+          availableCalendars: calendarManager.availableCalendars,
+          selectedCalendars: calendarManager.selectedCalendars,
+        );
+      },
+    ).then((result) {
+      if (result != null) {
+        setState(() {
+          // selectedCalendars = result as Set<String>;
+          //_fetchActivities();
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Theme(
-      data: _isDark ? ThemeData.dark() : ThemeData.light(),
+      data: ThemeData.light(),
       child: Scaffold(
         appBar: AppBar(
           title: const Text("Settings"),
@@ -27,46 +84,34 @@ class _SettingsPage2State extends State<SettingsPage2> {
                   title: "General",
                   children: [
                     _CustomListTile(
-                        title: "Dark Mode",
-                        icon: Icons.dark_mode_outlined,
-                        trailing: Switch(
-                            value: _isDark,
-                            onChanged: (value) {
-                              setState(() {
-                                _isDark = value;
-                              });
-                            })),
-                    const _CustomListTile(
-                        title: "Notifications",
-                        icon: Icons.notifications_none_rounded),
-                    const _CustomListTile(
-                        title: "Security Status",
-                        icon: CupertinoIcons.lock_shield),
+                      title: "Sign out",
+                      icon: Icons.exit_to_app_rounded,
+                      onTap: _signOut,
+                    ),
                   ],
                 ),
                 const Divider(),
-                const _SingleSection(
-                  title: "Organization",
+                _SingleSection(
+                  title: "Data",
                   children: [
                     _CustomListTile(
-                        title: "Profile", icon: Icons.person_outline_rounded),
-                    _CustomListTile(title: "History", icon: Icons.history),
+                      title: "Manage Calendars",
+                      icon: Icons.calendar_today_outlined,
+                      onTap: _openCalendarOverlay,
+                    ),
                     _CustomListTile(
-                        title: "Calendar", icon: Icons.calendar_today_rounded)
+                      title: "Refresh",
+                      icon: Icons.cloud_sync,
+                      onTap: () async {
+                        showLoadingSnackbar(context);
+                        await dataManager.fetchAndStoreActivities(
+                            GoogleSignInManager.instance.currentUser);
+                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      },
+                    ),
                   ],
                 ),
                 const Divider(),
-                const _SingleSection(
-                  children: [
-                    _CustomListTile(
-                        title: "Help & Feedback",
-                        icon: Icons.help_outline_rounded),
-                    _CustomListTile(
-                        title: "About", icon: Icons.info_outline_rounded),
-                    _CustomListTile(
-                        title: "Sign out", icon: Icons.exit_to_app_rounded),
-                  ],
-                ),
               ],
             ),
           ),
@@ -80,9 +125,14 @@ class _CustomListTile extends StatelessWidget {
   final String title;
   final IconData icon;
   final Widget? trailing;
-  const _CustomListTile(
-      {Key? key, required this.title, required this.icon, this.trailing})
-      : super(key: key);
+  final VoidCallback? onTap;
+
+  const _CustomListTile({
+    required this.title,
+    required this.icon,
+    this.trailing,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +140,7 @@ class _CustomListTile extends StatelessWidget {
       title: Text(title),
       leading: Icon(icon),
       trailing: trailing,
-      onTap: () {},
+      onTap: onTap,
     );
   }
 }
@@ -98,11 +148,11 @@ class _CustomListTile extends StatelessWidget {
 class _SingleSection extends StatelessWidget {
   final String? title;
   final List<Widget> children;
+
   const _SingleSection({
-    Key? key,
     this.title,
     required this.children,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -118,9 +168,7 @@ class _SingleSection extends StatelessWidget {
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
-        Column(
-          children: children,
-        ),
+        ...children,
       ],
     );
   }

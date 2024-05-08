@@ -1,181 +1,138 @@
+import 'package:dailyspace/datastructures/calendar_manager.dart';
+import 'package:dailyspace/datastructures/data_manager.dart';
+import 'package:dailyspace/screens/acitivity_tracker.dart';
+import 'package:dailyspace/screens/calendar.dart';
+import 'package:dailyspace/screens/setting.dart';
+import 'package:dailyspace/screens/vis.dart';
+import 'package:dailyspace/services/google_sign_in_manager.dart';
+import 'package:dailyspace/widgets/activity_tracker/activity_manager.dart';
 import 'package:flutter/material.dart';
-import 'screens/login_screen.dart'; // Import your login screen widget
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import 'screens/acitivity_tracker.dart';
-import 'screens/vis.dart';
-import 'screens/setting.dart';
-import 'screens/calendar.dart';
 import 'dart:developer';
 import 'package:auth_buttons/auth_buttons.dart';
-import 'package:dailyspace/screens/acitivity_tracker.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import '../google/google_sign_in_manager.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'package:provider/provider.dart';
-import 'package:dailyspace/activity_manager.dart';
+import 'screens/login_screen.dart'; // Importing the LoginScreen file
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const MyApp());
+
+  GoogleSignInAccount? account = GoogleSignInManager.instance.currentUser;
+
+  Widget initialScreen;
+  if (account != null) {
+    CalendarManager calendarManager = CalendarManager();
+    DataManager dataManager = DataManager(calendarManager: calendarManager);
+    await calendarManager.fetchCalendars(account);
+    initialScreen =
+        MainScreen(calendarManager: calendarManager, dataManager: dataManager);
+  } else {
+    initialScreen = const LoginScreen();
+  }
+  runApp(MyApp(initialScreen: initialScreen));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final Widget initialScreen;
+
+  const MyApp({Key? key, required this.initialScreen}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: LoginScreen(),
+      home: initialScreen,
     );
-  }
-}
-
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            GoogleAuthButton(
-              onPressed: () {
-                _signInWithGoogle(context);
-                // _testCase(context);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _signInWithGoogle(BuildContext context) async {
-    log('Attempting Google Sign-In');
-    try {
-      final GoogleSignIn googleSignIn =
-          GoogleSignInManager.instance.googleSignIn;
-      final GoogleSignInAccount? googleSignInAccount =
-          await googleSignIn.signIn();
-
-      if (googleSignInAccount != null) {
-        final GoogleSignInAuthentication googleSignInAuthentication =
-            await googleSignInAccount.authentication;
-
-        final AuthCredential credential = GoogleAuthProvider.credential(
-          accessToken: googleSignInAuthentication.accessToken,
-          idToken: googleSignInAuthentication.idToken,
-        );
-
-        // Use the credentials to sign in with Firebase
-        final UserCredential userCredential =
-            await FirebaseAuth.instance.signInWithCredential(credential);
-        final User? user = userCredential.user;
-
-        if (user != null) {
-          log('Signed in with Google: ${user.uid}');
-          addUser("test", "test@gmail.com", 21); // Example call
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const MainScreen()),
-          );
-        } else {
-          log('Failed to sign in with Google: No user in Firebase');
-        }
-      } else {
-        log('Google sign-in aborted by user');
-      }
-    } catch (error) {
-      log('Error signing in with Google: $error');
-    }
-  }
-
-  Future<void> addUser(String name, String email, int age) {
-    FirebaseFirestore firestore = FirebaseFirestore.instance;
-    User? user = FirebaseAuth.instance.currentUser;
-
-    if (user != null) {
-      DocumentReference userDoc = firestore.collection('users').doc(user.uid);
-
-      return userDoc
-          .set({
-            'name': name,
-            'email': email,
-            'age': age,
-          })
-          .then((value) => log("User added successfully!"))
-          .catchError((error) => log("Failed to add user: $error"));
-    } else {
-      log("User is not authenticated");
-      throw Exception('User is not authenticated');
-    }
   }
 }
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
-
+  final CalendarManager calendarManager;
+  final DataManager dataManager;
+  const MainScreen(
+      {Key? key, required this.calendarManager, required this.dataManager})
+      : super(key: key);
   @override
   _MainScreenState createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
+  late CalendarManager calendarManager;
+  late DataManager dataManager;
   int _selectedIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    calendarManager = widget.calendarManager;
+    dataManager = widget.dataManager;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    log("initial mainscreen calendars " +
+        calendarManager.availableCalendars.toString());
     return ChangeNotifierProvider<ActivityManager>(
       create: (_) => ActivityManager(),
       child: Scaffold(
         body: IndexedStack(
           index: _selectedIndex,
           children: <Widget>[
-            ActivityTracker(),
+            ActivityTracker(
+              calendarManager: widget.calendarManager,
+              dataManager: widget.dataManager,
+            ),
             Consumer<ActivityManager>(
               builder: (context, manager, child) =>
                   Calendar(availableActivities: manager.availableActivities),
             ),
-            OptionTwoPage(),
-            SettingsPage2(),
+            const OptionTwoPage(),
+            SettingsPage2(
+              calendarManager: widget.calendarManager,
+              dataManager: widget.dataManager,
+            ),
           ],
         ),
         bottomNavigationBar: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard),
+              icon: Icon(
+                Icons.dashboard,
+                color: Colors.black,
+              ),
               label: 'Tracker',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_today),
+              icon: Icon(
+                Icons.calendar_today,
+                color: Colors.black,
+              ),
               label: 'Calendar',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.show_chart),
+              icon: Icon(
+                Icons.show_chart,
+                color: Colors.black,
+              ),
               label: 'Visualize',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
+              icon: Icon(
+                Icons.settings,
+                color: Colors.black,
+              ),
               label: 'Settings',
             ),
           ],
           currentIndex: _selectedIndex,
-          selectedItemColor: Colors.amber[800],
+          selectedItemColor:
+              Colors.purple, // Change the selected item color to purple
           onTap: (index) {
             setState(() => _selectedIndex = index);
           },
@@ -184,3 +141,6 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
+
+// Add the SettingsPage2 widget definition here
+

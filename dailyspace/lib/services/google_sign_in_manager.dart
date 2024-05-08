@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:google_sign_in/google_sign_in.dart';
 
 class GoogleSignInManager {
@@ -27,6 +29,7 @@ class GoogleSignInManager {
       return await googleSignIn.signIn();
     } catch (e) {
       // Handle errors here if needed
+      log(e.toString());
       return null;
     }
   }

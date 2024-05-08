@@ -1,24 +1,23 @@
+import 'package:dailyspace/datastructures/taskinfo.dart';
 import 'package:flutter/material.dart';
-import 'package:dailyspace/custom_classes/taskinfo.dart';
 import 'package:intl/intl.dart';
 
 class Calendar extends StatelessWidget {
   final Map<String, TaskInfo>? availableActivities;
 
-  const Calendar({Key? key, this.availableActivities}) : super(key: key);
+  const Calendar({super.key, this.availableActivities});
 
   @override
   Widget build(BuildContext context) {
     final Map<String, TaskInfo> activities = availableActivities ?? {};
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Calendar Activities'),
-        backgroundColor: Colors.blue,
+      body: Padding(
+        padding: const EdgeInsets.only(top: 20),
+        child: activities.isEmpty
+            ? const Center(child: Text('No activities available'))
+            : buildActivitiesTimeline(activities),
       ),
-      body: activities.isEmpty
-          ? Center(child: Text('No activities available'))
-          : buildActivitiesTimeline(activities),
     );
   }
 
@@ -31,8 +30,7 @@ class Calendar extends StatelessWidget {
           .toList();
 
       Widget timeLabel = Container(
-        padding: EdgeInsets.symmetric(
-            vertical: 16), // Adjust the space for each hour
+        padding: const EdgeInsets.symmetric(vertical: 25),
         child: Text('${hour.toString().padLeft(2, '0')}:00'),
       );
 
@@ -52,17 +50,20 @@ class Calendar extends StatelessWidget {
       );
     }
 
-    return ListView(children: timelineTasks);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: ListView(children: timelineTasks),
+    );
   }
 
   Widget buildTaskTile(TaskInfo task) {
     return Flexible(
       child: Container(
-        padding: EdgeInsets.all(4.0),
+        padding: const EdgeInsets.all(4.0),
         child: ListTile(
           title: Text(
             task.title,
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: const TextStyle(fontWeight: FontWeight.bold),
             overflow: TextOverflow.ellipsis,
           ),
           subtitle: Text(

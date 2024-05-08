@@ -1,16 +1,14 @@
-import 'dart:developer';
 import 'package:auth_buttons/auth_buttons.dart';
-import 'package:dailyspace/google/firebase_handler.dart';
-import 'package:dailyspace/screens/acitivity_tracker.dart';
-import 'package:flutter/foundation.dart';
+import 'package:dailyspace/datastructures/calendar_manager.dart';
+import 'package:dailyspace/datastructures/data_manager.dart';
+import 'package:dailyspace/main.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import '../google/google_sign_in_manager.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'dart:developer';
 
 class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +23,6 @@ class LoginScreen extends StatelessWidget {
             GoogleAuthButton(
               onPressed: () {
                 _signInWithGoogle(context);
-                // _testCase(context);
               },
             ),
           ],
@@ -35,10 +32,13 @@ class LoginScreen extends StatelessWidget {
   }
 
   Future<void> _signInWithGoogle(BuildContext context) async {
+    CalendarManager calendarManager = CalendarManager();
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    DataManager dataManager = DataManager(calendarManager: calendarManager);
     log('Attempting Google Sign-In');
     try {
-      final GoogleSignIn googleSignIn =
-          GoogleSignInManager.instance.googleSignIn;
+      final GoogleSignIn googleSignIn = GoogleSignIn();
       final GoogleSignInAccount? googleSignInAccount =
           await googleSignIn.signIn();
 
@@ -58,22 +58,35 @@ class LoginScreen extends StatelessWidget {
 
         if (user != null) {
           log('Signed in with Google: ${user.uid}');
-          FirebaseManager firebaseManager = FirebaseManager();
-          await firebaseManager.addUser().catchError((error) {
-            log("Failed to add user to Firestore: $error");
-          });
 
+          scaffoldMessenger.showSnackBar(
+            SnackBar(content: Text('Successfully signed in with Google')),
+          );
+          await calendarManager.fetchCalendars(googleSignInAccount);
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const ActivityTracker()),
+            MaterialPageRoute(
+                builder: (context) => MainScreen(
+                      calendarManager: calendarManager,
+                      dataManager: dataManager,
+                    )),
           );
         } else {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(content: Text('Failed to sign in with Google')),
+          );
           log('Failed to sign in with Google: No user in Firebase');
         }
       } else {
         log('Google sign-in aborted by user');
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('Google sign-in aborted by user')),
+        );
       }
     } catch (error) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Error signing in with Google')),
+      );
       log('Error signing in with Google: $error');
     }
   }
